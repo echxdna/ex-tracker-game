@@ -53,7 +53,7 @@ width:80px;
 <p>現在ハマり亀: <span id="current"></span></p>
 <p>最高ハマり亀: <span id="max"></span></p>
 
-<p>出現確率亀: <span id="rate"></span>%</p>
+<p>EX出現確率亀: <span id="rate"></span>%</p>
 
 </div>
 
@@ -126,7 +126,7 @@ if(data.currentStreak > data.maxStreak){
 data.maxStreak = data.currentStreak
 }
 
-let cleared = confirm("勝ったかめか？(負けたらキャンセルかめね)")
+let cleared = confirm("勝ったかめか？(負けたら[キャンセル]かめね)")
 
 if(cleared){
 
@@ -186,16 +186,16 @@ editPanel.style.display = "none"
 function validate(d){
 
 if(d.extraAppearances > d.normalClears)
-return "EX出現回数が周回数を超えてるかめね"
+return "EX出現が周回数を超えてるかめね"
 
 if(d.currentStreak > d.normalClears)
-return "現在ハマりが周回数を超えているかめね"
+return "現在ハマりが周回数を超えてるかめね"
 
 if(d.maxStreak < d.currentStreak)
 return "最高ハマりは現在ハマり以上かめね"
 
 if(d.extraRewards < 0)
-return "報酬は0以上かめね"
+return "総ラックは0以上かめね"
 
 return null
 
