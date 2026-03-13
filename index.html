@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Extra Stage Tracker</title>
+
+<style>
+
+body{
+font-family:sans-serif;
+text-align:center;
+margin-top:40px;
+}
+
+button{
+font-size:18px;
+padding:10px 20px;
+margin:5px;
+}
+
+.panel{
+margin-top:30px;
+}
+
+#editPanel{
+display:none;
+margin-top:20px;
+border:1px solid #ccc;
+padding:20px;
+width:300px;
+margin-left:auto;
+margin-right:auto;
+}
+
+input{
+width:80px;
+}
+
+</style>
+</head>
+
+<body>
+
+<h2>&#x1f422;EX Tracker&#x1f54a;</h2>
+
+<button onclick="normal()">+1&#x1f422;</button>
+<button onclick="extra()">EX&#x1f422;</button>
+<button onclick="openEdit()">Edit&#x270f;</button>
+
+<div class="panel">
+
+<p>総周回数亀: <span id="normalTotal"></span></p>
+<p>総EX出現亀: <span id="extraTotal"></span></p>
+<p>総ラック亀: <span id="rewardTotal"></span></p>
+
+<p>現在ハマり亀: <span id="current"></span></p>
+<p>最高ハマり亀: <span id="max"></span></p>
+
+<p>出現確率亀: <span id="rate"></span>%</p>
+
+</div>
+
+<div id="editPanel">
+
+<h3>Edit</h3>
+
+<p>
+総周回数亀<br>
+<input id="editNormal" type="number" min="0">
+</p>
+
+<p>
+総EX出現亀<br>
+<input id="editExtra" type="number" min="0">
+</p>
+
+<p>
+総ラック亀<br>
+<input id="editReward" type="number" min="0">
+</p>
+
+<p>
+現在ハマり亀<br>
+<input id="editCurrent" type="number" min="0">
+</p>
+
+<p>
+最高ハマり亀<br>
+<input id="editMax" type="number" min="0">
+</p>
+
+<button onclick="saveEdit()">Save</button>
+<button onclick="cancelEdit()">Cancel</button>
+
+</div>
+
+<script>
+
+let data = JSON.parse(localStorage.getItem("stageTracker")) || {
+
+normalClears:0,
+extraAppearances:0,
+extraRewards:0,
+
+currentStreak:0,
+maxStreak:0
+
+}
+
+function save(){
+localStorage.setItem("stageTracker",JSON.stringify(data))
+update()
+}
+
+function normal(){
+
+data.normalClears++
+data.currentStreak++
+
+save()
+
+}
+
+function extra(){
+
+data.extraAppearances++
+
+if(data.currentStreak > data.maxStreak){
+data.maxStreak = data.currentStreak
+}
+
+let cleared = confirm("勝ったかめか？(負けたらキャンセルかめね)")
+
+if(cleared){
+
+let reward = prompt("ドロップ亀は？")
+
+if(reward){
+data.extraRewards += Number(reward)
+}
+
+}
+
+data.currentStreak = 0
+
+save()
+
+}
+
+function update(){
+
+normalTotal.textContent = data.normalClears
+extraTotal.textContent = data.extraAppearances
+rewardTotal.textContent = data.extraRewards
+
+current.textContent = data.currentStreak
+max.textContent = data.maxStreak
+
+let rate = 0
+
+if(data.normalClears > 0){
+rate = (data.extraAppearances / data.normalClears * 100).toFixed(2)
+}
+
+rate = rate
+
+document.getElementById("rate").textContent = rate
+
+}
+
+function openEdit(){
+
+editPanel.style.display = "block"
+
+editNormal.value = data.normalClears
+editExtra.value = data.extraAppearances
+editReward.value = data.extraRewards
+editCurrent.value = data.currentStreak
+editMax.value = data.maxStreak
+
+}
+
+function cancelEdit(){
+
+editPanel.style.display = "none"
+
+}
+
+function validate(d){
+
+if(d.extraAppearances > d.normalClears)
+return "EX出現回数が周回数を超えてるかめね"
+
+if(d.currentStreak > d.normalClears)
+return "現在ハマりが周回数を超えているかめね"
+
+if(d.maxStreak < d.currentStreak)
+return "最高ハマりは現在ハマり以上かめね"
+
+if(d.extraRewards < 0)
+return "報酬は0以上かめね"
+
+return null
+
+}
+
+function saveEdit(){
+
+let newData = {
+
+normalClears:Number(editNormal.value),
+extraAppearances:Number(editExtra.value),
+extraRewards:Number(editReward.value),
+currentStreak:Number(editCurrent.value),
+maxStreak:Number(editMax.value)
+
+}
+
+let error = validate(newData)
+
+if(error){
+alert(error)
+return
+}
+
+data = newData
+
+save()
+
+editPanel.style.display = "none"
+
+}
+
+update()
+
+</script>
+
+</body>
+</html>
