@@ -4,7 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Extra Stage Tracker</title>
+<title>EX MAS-turtle</title>
+
+<meta name="description" content="EXの出現回数を数えるかめね">
+<meta property="og:type" content="website">
+
 
 <style>
 
@@ -34,12 +38,22 @@ input{
 width:80px;
 }
 
+@keyframes flash {
+0% { background-color: white; }
+50% { background-color: #b6ffb6; }
+100% { background-color: white; }
+}
+
+.flash{
+animation: flash 0.25s;
+}
+
 </style>
 </head>
 
 <body>
 
-<h2>&#x1f422;EX Tracker&#x1f54a;</h2>
+<h2>&#x1f422;EX MAS-turtle&#x1f54a;</h2>
 
 <button onclick="normal()">+1&#x1f422;</button>
 <button onclick="extra()">EX&#x1f54a;</button>
@@ -47,13 +61,11 @@ width:80px;
 
 <div class="panel">
 
+<p>現在周回亀: <span id="current"></span></p>
 <p>総周回亀: <span id="normalTotal"></span></p>
 <p>総EX出現亀: <span id="extraTotal"></span></p>
 <p>総ラック亀: <span id="rewardTotal"></span></p>
-
-<p>現在周回亀: <span id="current"></span></p>
 <p>最高ハマり亀: <span id="max"></span></p>
-
 <p>EX出現亀率: <span id="rate"></span>%</p>
 
 </div>
@@ -61,6 +73,11 @@ width:80px;
 <div id="editPanel">
 
 <h3>&#x1f235; EDit &#x1f338;</h3>
+
+<p>
+現在周回亀<br>
+<input id="editCurrent" type="number" min="0">
+</p>
 
 <p>
 総周回亀<br>
@@ -75,11 +92,6 @@ width:80px;
 <p>
 総ラック亀<br>
 <input id="editReward" type="number" min="0">
-</p>
-
-<p>
-現在周回亀<br>
-<input id="editCurrent" type="number" min="0">
 </p>
 
 <p>
@@ -105,6 +117,14 @@ maxStreak:0
 
 }
 
+function flashScreen(){
+document.body.classList.add("flash")
+
+setTimeout(()=>{
+document.body.classList.remove("flash")
+},250)
+}
+
 function save(){
 localStorage.setItem("stageTracker",JSON.stringify(data))
 update()
@@ -116,6 +136,7 @@ data.normalClears++
 data.currentStreak++
 
 save()
+flashScreen()
 
 }
 
