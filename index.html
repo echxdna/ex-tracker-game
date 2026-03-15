@@ -18,29 +18,64 @@ text-align:center;
 margin-top:40px;
 }
 
-button{
-font-size:20px;
+.mainButton{
+font-size:30px;
 padding:15px 25px;
+margin:8px;
+}
+
+.subButton{
+font-size:15px;
+padding:8px 13px;
 margin:8px;
 }
 
 .label{
 font-size:24px;
+text-align:left;
+}
+
+.stats{
+border-collapse: collapse;
+margin-left: auto;
+margin-right: auto;
+}
+
+.stats td{
+padding:6px 12px;
 }
 
 .stat{
 font-size:28px;
 font-weight:bold;
+text-align:right;
+}
+
+.stat{
+font-variant-numeric: tabular-nums;
+}
+
+.percent::after{
+content:"%";
+margin-left:2px;
+font-size:0.8em;
 }
 
 .panel{
-margin-top:30px;
+margin-top:10px;
 }
 
 #editPanel{
 display:none;
 width:90%;
 max-width:400px;
+margin:auto;
+}
+
+.editGrid{
+display:grid;
+grid-template-columns: 1fr 1fr;
+gap:15px;
 }
 
 input{
@@ -64,52 +99,81 @@ animation: flash 0.25s;
 
 <h2>&#x1f422;EX MAS-turtle&#x1f54a;</h2>
 
-<button onclick="normal()">+1&#x1f422;</button>
-<button onclick="extra()">EX&#x1f54a;</button>
-<button onclick="openEdit()">EDit&#x270f;</button>
+<button class="mainButton" onclick="normal()">+1&#x1f422;</button>
+<button class="mainButton" onclick="extra()">EX&#x1f54a;</button>
+<button class="subButton" onclick="openEdit()">EDit&#x270f;</button>
 
 <div class="panel">
 
-<p><span class="label">現在周回&#x1f422;: <span class="stat" id="current"></span></p>
-<p><span class="label">総周回&#x1f422;: <span class="stat" id="normalTotal"></span></p>
-<p><span class="label">総EX出現&#x1f54a;: <span class="stat" id="extraTotal"></span></p>
-<p><span class="label">総ラック&#x1f340;: <span class="stat" id="rewardTotal"></span></p>
-<p><span class="label">最高ハマり&#x1f422;: <span class="stat" id="max"></span></p>
-<p><span class="label">EX出現亀率: <span class="stat" id="rate"></span>%</p>
+<table class="stats">
+
+<tr>
+<td class="label">現在周回&#x1f422;:</td>
+<td class="stat" id="current"></td>
+</tr>
+
+<tr>
+<td class="label">総周回&#x1f422;:</td>
+<td class="stat" id="normalTotal"></td>
+</tr>
+
+<tr>
+<td class="label">総EX出現&#x1f54a;:</td>
+<td class="stat" id="extraTotal"></td>
+</tr>
+
+<tr>
+<td class="label">総ラック&#x1f340;:</td>
+<td class="stat" id="rewardTotal"></td>
+</tr>
+
+<tr>
+<td class="label">最高ハマり&#x1f422;:</td>
+<td class="stat" id="max"></td>
+</tr>
+
+<tr>
+<td class="label">EX出現確率:</td>
+<td class="stat percent" id="rate"></td>
+</tr>
 
 </div>
 
 <div id="editPanel">
 
+<div class="editGrid">
+
 <h3>&#x1f235; EDit &#x1f338;</h3>
 
 <p>
-現在周回亀<br>
+現在周回<br>
 <input id="editCurrent" type="number" min="0">
 </p>
 
 <p>
-総周回亀<br>
+総周回<br>
 <input id="editNormal" type="number" min="0">
 </p>
 
 <p>
-総EX出現亀<br>
+総EX出現<br>
 <input id="editExtra" type="number" min="0">
 </p>
 
 <p>
-総ラック亀<br>
+総ラック<br>
 <input id="editReward" type="number" min="0">
 </p>
 
 <p>
-最高ハマり亀<br>
+最高ハマり<br>
 <input id="editMax" type="number" min="0">
 </p>
 
-<button onclick="saveEdit()">Save&#x1f4dd;</button>
-<button onclick="cancelEdit()">Cancel&#x274e;</button>
+</div>
+
+<button class="subButton" onclick="saveEdit()">Save&#x1f4dd;</button>
+<button class="subButton" onclick="cancelEdit()">Cancel&#x274e;</button>
 
 </div>
 
