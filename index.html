@@ -9,19 +9,124 @@
 <meta name="description" content="EXの出現回数を数えるかめね">
 <meta property="og:type" content="website">
 
-
 <style>
-
 body{
 font-family:sans-serif;
 text-align:center;
 margin-top:40px;
+margin-left:0;
+margin-right:0;
+}
+
+#sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 100%;
+  background: #e0f7fa;
+  overflow-x: hidden;
+  transition: 0.3s;
+  z-index: 1000;
+  box-shadow: 2px 0 8px #0001;
+  padding-top: 60px;
+}
+
+#sidebar.open {
+  width: 180px;
+}
+
+#sidebar .closebtn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 28px;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+#sidebar .stageBtn {
+  display: block;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  padding: 16px 24px;
+  font-size: 16px;
+  cursor: pointer;
+  color: #00796b;
+  outline: none;
+}
+
+#sidebar .stageBtn.active {
+  background: #b2dfdb;
+  font-weight: bold;
+}
+
+#toggleSidebarBtn {
+  position: fixed;
+  left: 10px;
+  top: 10px;
+  font-size: 28px;
+  background: #e0f7fa;
+  border: none;
+  border-radius: 6px;
+  z-index: 1100;
+  cursor: pointer;
+  padding: 4px 10px;
+  transition: background 0.2s;
+}
+#toggleSidebarBtn:hover {
+  background: #b2dfdb;
+}
+
+.sidebarGroup {
+  margin-bottom: 18px;
+  padding-left: 8px;
+  border-left: 2px solid #b2dfdb;
+}
+.sidebarGroupTitle {
+  font-size: 15px;
+  color: #009688;
+  margin-bottom: 4px;
+  margin-top: 8px;
+  font-weight: bold;
+}
+
+.sidebarGroupContent {
+  max-height: 500px; /* 展開時の最大高さ（十分大きく） */
+  transition: max-height 0.3s cubic-bezier(.4,0,.2,1), opacity 0.3s;
+  overflow: hidden;
+  opacity: 1;
+}
+.sidebarGroupContent.collapsed {
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+  margin-top: 20px;
+}
+
+.mainContent {
+  margin-left: 0;
+  transition: none;
+}
+
+.buttonGroup {
+  display:auto;
+  flex-direction:column;
+  align-items:center;
+  margin-bottom:16px;
 }
 
 .mainButton{
+display:auto;
+flex-direction:column;
+align-items:center;
 font-size:30px;
 padding:15px 25px;
 margin:8px;
+margin-bottom:8px;
 }
 
 .subButton{
@@ -91,52 +196,87 @@ width:80px;
 .flash{
 animation: flash 0.25s;
 }
-
 </style>
 </head>
 
 <body>
 
-<h2>&#x1f422;EX MAS-turtle&#x1f54a;</h2>
+<button id="toggleSidebarBtn" onclick="toggleSidebar()">&#9776;</button>
+<div id="sidebar">
+    <div class="sidebarGroup">
+        <div class="sidebarGroupTitle">天魔の孤城</div>
+        <button class="stageBtn" id="stageBtn0" onclick="selectStage(0)">アーキレット</button>
+        <button class="stageBtn" id="stageBtn1" onclick="selectStage(1)">コルティーナ</button>
+    </div>
+    <div class="sidebarGroup">
+        <div class="sidebarGroupTitle">破界の星墓</div>
+        <button class="stageBtn" id="stageBtn2" onclick="selectStage(2)">アムネディア</button>
+    </div>
+    <div class="sidebarGroup">
+        <div class="sidebarGroupTitle" onclick="toggleGroup(this)">禁忌の獄(展開▼)</div>
+        <div class="sidebarGroupContent collapsed">
+            <button class="stageBtn" id="stageBtn4" onclick="selectStage(4)">刹那</button>
+            <button class="stageBtn" id="stageBtn5" onclick="selectStage(5)">那由多</button>
+            <button class="stageBtn" id="stageBtn6" onclick="selectStage(6)">阿頼耶</button>
+            <button class="stageBtn" id="stageBtn7" onclick="selectStage(7)">無量大数</button>
+            <button class="stageBtn" id="stageBtn8" onclick="selectStage(8)">涅槃寂静</button>
+            <button class="stageBtn" id="stageBtn9" onclick="selectStage(9)">不可思議</button>
+        </div>
+    </div>
+    <div class="sidebarGroup">
+        <div class="sidebarGroupTitle">その他</div>
+        <button class="stageBtn" id="stageBtn3" onclick="selectStage(3)">自由枠</button>
+        <button class="stageBtn" onclick="if(confirm('全てのデータをリセットするかめか？')){localStorage.removeItem('stageTrackerAll'); localStorage.removeItem('stageIndex'); location.reload();}">初期化</button>
+    </div>
+</div>
 
-<button class="mainButton" onclick="normal()">+1&#x1f422;</button>
-<button class="mainButton" onclick="extra()">EX&#x1f54a;</button>
-<button class="subButton" onclick="openEdit()">EDit&#x270f;</button>
+<div class="mainContent" id="mainContent">
+
+<h2 id="stageTitle">&#x1f422;EX MAS-turtle&#x1f54a;</h2>
+
+<div class="buttonGroup">
+  <div class="mainButtons">
+    <button class="mainButton" onclick="normal()">+1&#x1f422;</button>
+    <button class="mainButton" onclick="extra()">EX&#x1f54a;</button>
+  </div>
+  <button class="subButton" onclick="openEdit()">EDit&#x270f;</button>
+</div>
 
 <div class="panel">
 
 <table class="stats">
 
 <tr>
-<td class="label">現在周回&#x1f422;:</td>
+<td class="label">現在周回&#x1f422;</td>
 <td class="stat" id="current"></td>
 </tr>
 
 <tr>
-<td class="label">総周回&#x1f422;:</td>
+<td class="label">総周回&#x1f422;</td>
 <td class="stat" id="normalTotal"></td>
 </tr>
 
 <tr>
-<td class="label">総EX出現&#x1f54a;:</td>
+<td class="label">総EX出現&#x1f54a;</td>
 <td class="stat" id="extraTotal"></td>
 </tr>
 
 <tr>
-<td class="label">総ラック&#x1f340;:</td>
+<td class="label">総ラック&#x1f340;</td>
 <td class="stat" id="rewardTotal"></td>
 </tr>
 
 <tr>
-<td class="label">最高ハマり&#x1f422;:</td>
+<td class="label">最高ハマり&#x1f422;</td>
 <td class="stat" id="max"></td>
 </tr>
 
 <tr>
-<td class="label">EX出現確率:</td>
+<td class="label">EX出現亀率</td>
 <td class="stat percent" id="rate"></td>
 </tr>
 
+</table>
 </div>
 
 <div id="editPanel">
@@ -176,155 +316,177 @@ animation: flash 0.25s;
 <button class="subButton" onclick="cancelEdit()">Cancel&#x274e;</button>
 
 </div>
+</div>
 
 <script>
+const STAGE_COUNT = 10;
+const STAGE_NAMES = ["アーキレット", "コルティーナ", "アムネディア", "その他", "刹那", "那由多", "阿頼耶", "無量大数", "涅槃寂静", "不可思議"];
+let stageIndex = Number(localStorage.getItem("stageIndex")) || 0;
 
-let data = JSON.parse(localStorage.getItem("stageTracker")) || {
+let allData = JSON.parse(localStorage.getItem("stageTrackerAll")) || [
+  { normalClears:0, extraAppearances:0, extraRewards:0, currentStreak:0, maxStreak:0 },
+  { normalClears:0, extraAppearances:0, extraRewards:0, currentStreak:0, maxStreak:0 },
+  { normalClears:0, extraAppearances:0, extraRewards:0, currentStreak:0, maxStreak:0 },
+  { normalClears:0, extraAppearances:0, extraRewards:0, currentStreak:0, maxStreak:0 },
+  { normalClears:0, extraAppearances:0, extraRewards:0, currentStreak:0, maxStreak:0 },
+  { normalClears:0, extraAppearances:0, extraRewards:0, currentStreak:0, maxStreak:0 },
+  { normalClears:0, extraAppearances:0, extraRewards:0, currentStreak:0, maxStreak:0 },
+  { normalClears:0, extraAppearances:0, extraRewards:0, currentStreak:0, maxStreak:0 },
+  { normalClears:0, extraAppearances:0, extraRewards:0, currentStreak:0, maxStreak:0 },
+  { normalClears:0, extraAppearances:0, extraRewards:0, currentStreak:0, maxStreak:0 },
+];
 
-normalClears:0,
-extraAppearances:0,
-extraRewards:0,
+while(allData.length < STAGE_COUNT){
+  allData.push({
+    normalClears:0,
+    extraAppearances:0,
+    extraRewards:0,
+    currentStreak:0,
+    maxStreak:0
+  });
+}
 
-currentStreak:0,
-maxStreak:0
+function saveAll(){
+  localStorage.setItem("stageTrackerAll", JSON.stringify(allData));
+  localStorage.setItem("stageIndex", stageIndex);
+}
 
+function getData(){
+  return allData[stageIndex];
+}
+
+function setData(d){
+  allData[stageIndex] = d;
+  saveAll();
 }
 
 function flashScreen(){
-document.body.classList.add("flash")
-
-setTimeout(()=>{
-document.body.classList.remove("flash")
-},250)
+  document.body.classList.add("flash")
+  setTimeout(()=>{
+    document.body.classList.remove("flash")
+  },250)
 }
 
 function save(){
-localStorage.setItem("stageTracker",JSON.stringify(data))
-update()
+  setData(getData());
+  update();
 }
 
 function normal(){
-
-data.normalClears++
-data.currentStreak++
-
-save()
-flashScreen()
-
+  let data = getData();
+  data.normalClears++;
+  data.currentStreak++;
+  save();
+  flashScreen();
 }
 
 function extra(){
-
-data.extraAppearances++
-
-if(data.currentStreak > data.maxStreak){
-data.maxStreak = data.currentStreak
-}
-
-let cleared = confirm("勝ったかめか？(負けたら[キャンセル]かめね)")
-
-if(cleared){
-
-let reward = prompt("ドロップ亀は？")
-
-if(reward){
-data.extraRewards += Number(reward)
-}
-
-}
-
-data.currentStreak = 0
-
-save()
-
+  let data = getData();
+  data.extraAppearances++;
+  if(data.currentStreak > data.maxStreak){
+    data.maxStreak = data.currentStreak;
+  }
+  let cleared = confirm("勝ったかめか？(負けたら[キャンセル]かめね)");
+  if(cleared){
+    let reward = prompt("ドロップ亀は？");
+    if(reward){
+      data.extraRewards += Number(reward);
+    }
+  }
+  data.currentStreak = 0;
+  save();
 }
 
 function update(){
-
-normalTotal.textContent = data.normalClears
-extraTotal.textContent = data.extraAppearances
-rewardTotal.textContent = data.extraRewards
-
-current.textContent = data.currentStreak
-max.textContent = data.maxStreak
-
-let rate = 0
-
-if(data.normalClears > 0){
-rate = (data.extraAppearances / data.normalClears * 100).toFixed(2)
-}
-
-rate = rate
-
-document.getElementById("rate").textContent = rate
-
+  let data = getData();
+  document.getElementById("normalTotal").textContent = data.normalClears;
+  document.getElementById("extraTotal").textContent = data.extraAppearances;
+  document.getElementById("rewardTotal").textContent = data.extraRewards;
+  document.getElementById("current").textContent = data.currentStreak;
+  document.getElementById("max").textContent = data.maxStreak;
+  let rate = 0;
+  if(data.normalClears > 0){
+    rate = (data.extraAppearances / data.normalClears * 100).toFixed(2);
+  }
+  document.getElementById("rate").textContent = rate;
+  document.getElementById("stageTitle").textContent = `${STAGE_NAMES[stageIndex]}`;
+  for(let i=0;i<STAGE_COUNT;i++){
+    let btn = document.getElementById(`stageBtn${i}`);
+    if(btn) btn.classList.toggle("active", i===stageIndex);
+  }
 }
 
 function openEdit(){
-
-editPanel.style.display = "block"
-
-editNormal.value = data.normalClears
-editExtra.value = data.extraAppearances
-editReward.value = data.extraRewards
-editCurrent.value = data.currentStreak
-editMax.value = data.maxStreak
-
+  let data = getData();
+  editPanel.style.display = "block";
+  editNormal.value = data.normalClears;
+  editExtra.value = data.extraAppearances;
+  editReward.value = data.extraRewards;
+  editCurrent.value = data.currentStreak;
+  editMax.value = data.maxStreak;
 }
 
 function cancelEdit(){
-
-editPanel.style.display = "none"
-
+  editPanel.style.display = "none";
 }
 
 function validate(d){
-
-if(d.extraAppearances > d.normalClears)
-return "EX出現が周回数を超えてるかめね"
-
-if(d.currentStreak > d.normalClears)
-return "現在ハマりが周回数を超えてるかめね"
-
-if(d.maxStreak < d.currentStreak)
-return "最高ハマりは現在ハマり以上かめね"
-
-if(d.extraRewards < 0)
-return "総ラックは0以上かめね"
-
-return null
-
+  if(d.extraAppearances > d.normalClears)
+    return "EX出現が周回数を超えてるかめね";
+  if(d.currentStreak > d.normalClears)
+    return "現在ハマりが周回数を超えてるかめね";
+  if(d.maxStreak < d.currentStreak)
+    return "最高ハマりは現在ハマり以上かめね";
+  if(d.extraRewards < 0)
+    return "総ラックは0以上かめね";
+  return null;
 }
 
 function saveEdit(){
-
-let newData = {
-
-normalClears:Number(editNormal.value),
-extraAppearances:Number(editExtra.value),
-extraRewards:Number(editReward.value),
-currentStreak:Number(editCurrent.value),
-maxStreak:Number(editMax.value)
-
+  let newData = {
+    normalClears:Number(editNormal.value),
+    extraAppearances:Number(editExtra.value),
+    extraRewards:Number(editReward.value),
+    currentStreak:Number(editCurrent.value),
+    maxStreak:Number(editMax.value)
+  }
+  let error = validate(newData);
+  if(error){
+    alert(error);
+    return;
+  }
+  setData(newData);
+  editPanel.style.display = "none";
+  update();
 }
 
-let error = validate(newData)
-
-if(error){
-alert(error)
-return
+function toggleSidebar(){
+  const sidebar = document.getElementById("sidebar");
+  const btn = document.getElementById("toggleSidebarBtn");
+  sidebar.classList.toggle("open");
+  if(sidebar.classList.contains("open")){
+    btn.innerHTML = "&times;";
+  }else{
+    btn.innerHTML = "&#9776;";
+  }
 }
 
-data = newData
-
-save()
-
-editPanel.style.display = "none"
-
+function selectStage(idx){
+  stageIndex = idx;
+  saveAll();
+  toggleSidebar();
+  update();
 }
 
-update()
+function toggleGroup(titleElem) {
+  const content = titleElem.nextElementSibling;
+  content.classList.toggle('collapsed');
+}
 
+window.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("toggleSidebarBtn").innerHTML = "&#9776;";
+  update();
+});
 </script>
 
 </body>
