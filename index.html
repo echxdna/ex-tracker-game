@@ -449,10 +449,27 @@ function extra(){
   if(data.currentStreak > data.maxStreak){
     data.maxStreak = data.currentStreak;
   }
-  let reward = prompt("ドロップ数を入力するかめね、負けたら「0」かめね");
-  if(reward){
-    data.extraRewards += Number(reward);
+
+  while(true){
+    let reward = prompt("ドロップ数を入力するかめね、負けたら「0」かめね");
+    if(reward === null){
+      // キャンセルは 0 として扱う
+      data.extraRewards += 0;
+      break;
+    }
+    if(reward.trim().length === 0){
+      alert("0以上の数字を入力するかめね");
+      continue;
+    }
+    const n = Number(reward);
+    if(!Number.isFinite(n) || n < 0){
+      alert("0以上の数字を入力するかめね");
+      continue;
+    }
+    data.extraRewards += Math.floor(n);
+    break;
   }
+
   data.currentStreak = 0;
   save();
   flashScreen("flashRed");
