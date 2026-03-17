@@ -439,6 +439,9 @@ function normal(){
   let data = getData();
   data.normalClears++;
   data.currentStreak++;
+  if (data.currentStreak > data.maxStreak) {
+    data.maxStreak = data.currentStreak;
+  }
   save();
   flashScreen("flash");
 }
@@ -516,8 +519,6 @@ function validate(d){
     return "EX出現が総周回を超えてるかめね";
   if(d.currentStreak > d.normalClears)
     return "現在周回が総周回を超えてるかめね";
-  if(d.maxStreak < d.currentStreak)
-    return "最高ハマりは現在周回以上かめね";
   if(d.extraRewards < 0)
     return "ラックは0以上かめね";
   return null;
@@ -561,6 +562,12 @@ function toggleGroup(titleElem) {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
+  for (let i = 0; i < allData.length; i++) {
+    if (allData[i].currentStreak > allData[i].maxStreak) {
+      allData[i].maxStreak = allData[i].currentStreak;
+    }
+  }
+  saveAll();
   update();
 });
 </script>
