@@ -9,9 +9,13 @@
 <meta name="description" content="EXの出現回数を数えるかめね">
 <meta property="og:type" content="website">
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@100;300;400;500;700;800;900&display=swap" rel="stylesheet">
+
 <style>
 body{
-font-family:sans-serif;
+font-family:'M PLUS Rounded 1c', sans-serif;
 text-align:center;
 margin-top:40px;
 margin-left:0;
@@ -22,18 +26,19 @@ margin-right:0;
   position: fixed;
   left: 0;
   top: 0;
-  width: 0;
+  width: 180px;  /* 常に固定幅 */
   height: 100%;
   background: #e0f7fa;
   overflow-x: hidden;
-  transition: 0.3s;
   z-index: 1000;
   box-shadow: 2px 0 8px #0001;
   padding-top: 60px;
+  transform: translateX(-180px);  /* 閉じた状態で左に隠す */
+  transition: transform 0.3s;  /* スライドアニメーション */
 }
 
 #sidebar.open {
-  width: 180px;
+  transform: translateX(0);  /* 開いた状態で元の位置 */
 }
 
 #sidebar .closebtn {
@@ -68,30 +73,71 @@ margin-right:0;
   position: fixed;
   left: 10px;
   top: 10px;
-  font-size: 28px;
-  background: #e0f7fa;
+  width: 40px;
+  height: 40px;
+  background: #ffffff;
   border: none;
   border-radius: 6px;
   z-index: 1100;
   cursor: pointer;
-  padding: 4px 10px;
+  padding: 8px;
   transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 #toggleSidebarBtn:hover {
-  background: #b2dfdb;
+  background: #e0f7fa;
+}
+
+.hamburger {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.hamburger-line {
+  width: 20px;
+  height: 2px;
+  background-color: #009688;
+  transition: all 0.3s ease;
+}
+
+.hamburger-line.top {
+  transform-origin: center;
+}
+
+.hamburger-line.middle {
+  transform-origin: center;
+}
+
+.hamburger-line.bottom {
+  transform-origin: center;
+}
+
+#toggleSidebarBtn.active .hamburger-line.top {
+  transform: translateY(7px) rotate(45deg);
+}
+
+#toggleSidebarBtn.active .hamburger-line.middle {
+  opacity: 0;
+}
+
+#toggleSidebarBtn.active .hamburger-line.bottom {
+  transform: translateY(-7px) rotate(-45deg);
 }
 
 .sidebarGroup {
   margin-bottom: 18px;
-  padding-left: 8px;
-  border-left: 2px solid #b2dfdb;
+  border-left: 0px solid #e0f7fa;
 }
 .sidebarGroupTitle {
   font-size: 15px;
   color: #009688;
   margin-bottom: 4px;
   margin-top: 8px;
-  font-weight: bold;
+  font-weight: 700;
+  font-style: bold;
 }
 
 .sidebarGroupContent {
@@ -123,7 +169,9 @@ margin-right:0;
 display:auto;
 flex-direction:column;
 align-items:center;
-font-size:30px;
+font-size:40px;
+font-weight:700;
+font-style:normal;
 padding:15px 25px;
 margin:8px;
 margin-bottom:8px;
@@ -131,12 +179,13 @@ margin-bottom:8px;
 
 .subButton{
 font-size:15px;
+font-style:italic;
 padding:8px 13px;
 margin:8px;
 }
 
 .label{
-font-size:24px;
+font-size:26px;
 text-align:left;
 }
 
@@ -151,7 +200,7 @@ padding:6px 12px;
 }
 
 .stat{
-font-size:28px;
+font-size:30px;
 font-weight:bold;
 text-align:right;
 }
@@ -189,19 +238,33 @@ width:80px;
 
 @keyframes flash {
 0% { background-color: white; }
-50% { background-color: #b6ffb6; }
+50% { background-color: #249646; }
 100% { background-color: white; }
 }
 
+@keyframes flashRed {
+0% { background-color: white; }
+50% { background-color: #E60011; }
+100% { background-color: white; }
+}
 .flash{
 animation: flash 0.25s;
+}
+.flashRed{
+animation: flashRed 0.25s;
 }
 </style>
 </head>
 
 <body>
 
-<button id="toggleSidebarBtn" onclick="toggleSidebar()">&#9776;</button>
+<button id="toggleSidebarBtn" onclick="toggleSidebar()">
+  <span class="hamburger">
+    <span class="hamburger-line top"></span>
+    <span class="hamburger-line middle"></span>
+    <span class="hamburger-line bottom"></span>
+  </span>
+</button>
 <div id="sidebar">
     <div class="sidebarGroup">
         <div class="sidebarGroupTitle">天魔の孤城</div>
@@ -257,12 +320,12 @@ animation: flash 0.25s;
 </tr>
 
 <tr>
-<td class="label">総EX出現&#x1f54a;</td>
+<td class="label">EX出現&#x1f54a;</td>
 <td class="stat" id="extraTotal"></td>
 </tr>
 
 <tr>
-<td class="label">総ラック&#x1f340;</td>
+<td class="label">ラック&#x1f340;</td>
 <td class="stat" id="rewardTotal"></td>
 </tr>
 
@@ -272,7 +335,7 @@ animation: flash 0.25s;
 </tr>
 
 <tr>
-<td class="label">EX出現亀率</td>
+<td class="label">EX出現率&#x1f54a;</td>
 <td class="stat percent" id="rate"></td>
 </tr>
 
@@ -296,12 +359,12 @@ animation: flash 0.25s;
 </p>
 
 <p>
-総EX出現<br>
+EX出現<br>
 <input id="editExtra" type="number" min="0">
 </p>
 
 <p>
-総ラック<br>
+ラック<br>
 <input id="editReward" type="number" min="0">
 </p>
 
@@ -320,7 +383,7 @@ animation: flash 0.25s;
 
 <script>
 const STAGE_COUNT = 10;
-const STAGE_NAMES = ["アーキレット", "コルティーナ", "アムネディア", "その他", "刹那", "那由多", "阿頼耶", "無量大数", "涅槃寂静", "不可思議"];
+const STAGE_NAMES = ["🔴アーキレット", "🟣コルティーナ", "🟢アムネディア", "その他", "🟡刹那", "🟣那由多", "🔵阿頼耶", "🔴無量大数", "🟢涅槃寂静", "🟡不可思議"];
 let stageIndex = Number(localStorage.getItem("stageIndex")) || 0;
 
 let allData = JSON.parse(localStorage.getItem("stageTrackerAll")) || [
@@ -360,10 +423,10 @@ function setData(d){
   saveAll();
 }
 
-function flashScreen(){
-  document.body.classList.add("flash")
+function flashScreen(color="flash"){
+  document.body.classList.add(color)
   setTimeout(()=>{
-    document.body.classList.remove("flash")
+    document.body.classList.remove(color)
   },250)
 }
 
@@ -377,7 +440,7 @@ function normal(){
   data.normalClears++;
   data.currentStreak++;
   save();
-  flashScreen();
+  flashScreen("flash");
 }
 
 function extra(){
@@ -386,15 +449,13 @@ function extra(){
   if(data.currentStreak > data.maxStreak){
     data.maxStreak = data.currentStreak;
   }
-  let cleared = confirm("勝ったかめか？(負けたら[キャンセル]かめね)");
-  if(cleared){
-    let reward = prompt("ドロップ亀は？");
-    if(reward){
-      data.extraRewards += Number(reward);
-    }
+  let reward = prompt("ドロップ数を入力するかめね、負けたら「0」かめね");
+  if(reward){
+    data.extraRewards += Number(reward);
   }
   data.currentStreak = 0;
   save();
+  flashScreen("flashRed");
 }
 
 function update(){
@@ -409,7 +470,7 @@ function update(){
     rate = (data.extraAppearances / data.normalClears * 100).toFixed(2);
   }
   document.getElementById("rate").textContent = rate;
-  document.getElementById("stageTitle").textContent = `${STAGE_NAMES[stageIndex]}`;
+  document.getElementById("stageTitle").innerHTML = `${STAGE_NAMES[stageIndex]}`;
   for(let i=0;i<STAGE_COUNT;i++){
     let btn = document.getElementById(`stageBtn${i}`);
     if(btn) btn.classList.toggle("active", i===stageIndex);
@@ -432,13 +493,13 @@ function cancelEdit(){
 
 function validate(d){
   if(d.extraAppearances > d.normalClears)
-    return "EX出現が周回数を超えてるかめね";
+    return "EX出現が総周回を超えてるかめね";
   if(d.currentStreak > d.normalClears)
-    return "現在ハマりが周回数を超えてるかめね";
+    return "現在周回が総周回を超えてるかめね";
   if(d.maxStreak < d.currentStreak)
-    return "最高ハマりは現在ハマり以上かめね";
+    return "最高ハマりは現在周回以上かめね";
   if(d.extraRewards < 0)
-    return "総ラックは0以上かめね";
+    return "ラックは0以上かめね";
   return null;
 }
 
@@ -464,11 +525,7 @@ function toggleSidebar(){
   const sidebar = document.getElementById("sidebar");
   const btn = document.getElementById("toggleSidebarBtn");
   sidebar.classList.toggle("open");
-  if(sidebar.classList.contains("open")){
-    btn.innerHTML = "&times;";
-  }else{
-    btn.innerHTML = "&#9776;";
-  }
+  btn.classList.toggle("active");
 }
 
 function selectStage(idx){
@@ -484,7 +541,6 @@ function toggleGroup(titleElem) {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("toggleSidebarBtn").innerHTML = "&#9776;";
   update();
 });
 </script>
