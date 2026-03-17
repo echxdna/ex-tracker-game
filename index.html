@@ -445,21 +445,18 @@ function normal(){
 
 function extra(){
   let data = getData();
-  data.extraAppearances++;
-  if(data.currentStreak > data.maxStreak){
-    data.maxStreak = data.currentStreak;
-  }
 
+  let reward;
   while(true){
-    let reward = prompt("ドロップ数を入力するかめね、負けたら「0」かめね");
+    reward = prompt("ドロップ数を入力するかめね、負けたらそのまま「OK」かめね");
     if(reward === null){
-      // キャンセルは 0 として扱う
-      data.extraRewards += 0;
+      // キャンセルは何も加算せず、flashScreenもせずに終わる
       break;
     }
     if(reward.trim().length === 0){
-      alert("0以上の数字を入力するかめね");
-      continue;
+      // 入力されてない状態のOKは0として扱う
+      data.extraRewards += 0;
+      break;
     }
     const n = Number(reward);
     if(!Number.isFinite(n) || n < 0){
@@ -470,9 +467,15 @@ function extra(){
     break;
   }
 
-  data.currentStreak = 0;
-  save();
-  flashScreen("flashRed");
+  if(reward !== null){
+    data.extraAppearances++;
+    if(data.currentStreak > data.maxStreak){
+      data.maxStreak = data.currentStreak;
+    }
+    data.currentStreak = 0;
+    save();
+    flashScreen("flashRed");
+  }
 }
 
 function update(){
