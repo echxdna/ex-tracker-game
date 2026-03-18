@@ -1,576 +1,864 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-<title>EX MAS-turtle</title>
+  <title>EX MAS-turtle</title>
 
-<meta name="description" content="EXの出現回数を数えるかめね">
-<meta property="og:type" content="website">
+  <meta name="description" content="EXの出現回数を数えるかめね">
+  <meta property="og:type" content="website">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@100;300;400;500;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    /* ── Reset & Base ── */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
 
-<style>
-body{
-font-family:'M PLUS Rounded 1c', sans-serif;
-text-align:center;
-margin-top:40px;
-margin-left:0;
-margin-right:0;
-}
+    :root {
+      --bg: #f2f2f7;
+      --card: #fff;
+      --separator: rgba(60, 60, 67, .12);
+      --label-primary: rgba(0, 0, 0, .85);
+      --label-secondary: rgba(60, 60, 67, .85);
+      --tint: #007aff;
+      --green: #34c759;
+      --red: #ff3b30;
+      --radius: 14px;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, .08), 0 1px 2px rgba(0, 0, 0, .04);
+    }
 
-#sidebar {
-  position: fixed;
-  left: 0;
-  top: 0;
-  width: 180px;  /* 常に固定幅 */
-  height: 100%;
-  background: #e0f7fa;
-  overflow-x: hidden;
-  z-index: 1000;
-  box-shadow: 2px 0 8px #0001;
-  padding-top: 60px;
-  transform: translateX(-180px);  /* 閉じた状態で左に隠す */
-  transition: transform 0.3s;  /* スライドアニメーション */
-}
+    html {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background: var(--bg);
+      color: var(--label-primary);
+    }
 
-#sidebar.open {
-  transform: translateX(0);  /* 開いた状態で元の位置 */
-}
+    body {
+      min-height: 100dvh;
+      padding: 0;
+      margin: 0;
+    }
 
-#sidebar .closebtn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  font-size: 28px;
-  cursor: pointer;
-  background: none;
-  border: none;
-}
+    /* ── Sidebar ── */
+    #sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 280px;
+      height: 100%;
+      background: rgba(255, 255, 255, .82);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      z-index: 1000;
+      padding: 68px 0 32px;
+      transform: translateX(-280px);
+      transition: transform .35s cubic-bezier(.32, .72, 0, 1), background-color .3s, border-color .3s;
+      overflow-y: auto;
+      border-right: 1px solid var(--separator);
+    }
 
-#sidebar .stageBtn {
-  display: block;
-  background: none;
-  border: none;
-  width: 100%;
-  text-align: left;
-  padding: 16px 24px;
-  font-size: 16px;
-  cursor: pointer;
-  color: #00796b;
-  outline: none;
-}
+    #sidebar.open {
+      transform: translateX(0);
+    }
 
-#sidebar .stageBtn.active {
-  background: #b2dfdb;
-  font-weight: bold;
-}
+    .sidebarGroup {
+      margin-bottom: 6px;
+    }
 
-#toggleSidebarBtn {
-  position: fixed;
-  left: 10px;
-  top: 10px;
-  width: 40px;
-  height: 40px;
-  background: #ffffff;
-  border: none;
-  border-radius: 6px;
-  z-index: 1100;
-  cursor: pointer;
-  padding: 8px;
-  transition: background 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-#toggleSidebarBtn:hover {
-  background: #e0f7fa;
-}
+    .sidebarGroupTitle {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: var(--label-secondary);
+      padding: 20px 20px 6px;
+      cursor: default;
+    }
 
-.hamburger {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
+    /* make collapsible title clickable */
+    .sidebarGroupTitle[onclick] {
+      cursor: pointer;
+    }
 
-.hamburger-line {
-  width: 20px;
-  height: 2px;
-  background-color: #009688;
-  transition: all 0.3s ease;
-}
+    .sidebarGroupContent {
+      max-height: 500px;
+      transition: max-height .35s cubic-bezier(.32, .72, 0, 1), opacity .3s;
+      overflow: hidden;
+      opacity: 1;
+    }
 
-.hamburger-line.top {
-  transform-origin: center;
-}
+    .sidebarGroupContent.collapsed {
+      max-height: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
 
-.hamburger-line.middle {
-  transform-origin: center;
-}
+    #sidebar .stageBtn {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: none;
+      padding: 11px 20px;
+      font-size: 15px;
+      font-family: inherit;
+      color: var(--label-primary);
+      cursor: pointer;
+      border-radius: 10px;
+      margin: 1px 8px;
+      width: calc(100% - 16px);
+      transition: background .15s;
+    }
 
-.hamburger-line.bottom {
-  transform-origin: center;
-}
+    #sidebar .stageBtn:hover {
+      background: rgba(0, 0, 0, .04);
+    }
 
-#toggleSidebarBtn.active .hamburger-line.middle {
-  transform:scaleY(0);
-}
+    #sidebar .stageBtn:active {
+      background: rgba(0, 0, 0, .08);
+    }
 
-#toggleSidebarBtn.active .hamburger-line.top {
-  transform: translateY(7px) rotate(45deg);
-}
+    #sidebar .stageBtn.active {
+      background: var(--tint);
+      color: #fff;
+      font-weight: 600;
+    }
 
-#toggleSidebarBtn.active .hamburger-line.bottom {
-  transform: translateY(-7px) rotate(-45deg);
-}
+    /* ── Hamburger / Toggle ── */
+    #toggleSidebarBtn {
+      position: fixed;
+      left: 16px;
+      top: 16px;
+      width: 36px;
+      height: 36px;
+      background: rgba(255, 255, 255, .72);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border: 1px solid var(--separator);
+      border-radius: 10px;
+      z-index: 1100;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .2s;
+    }
 
-.sidebarGroup {
-  margin-bottom: 18px;
-  border-left: 0px solid #e0f7fa;
-}
-.sidebarGroupTitle {
-  font-size: 15px;
-  color: #009688;
-  margin-bottom: 4px;
-  margin-top: 8px;
-  font-weight: 700;
-  font-style: bold;
-}
+    #toggleSidebarBtn:hover {
+      background: rgba(255, 255, 255, .92);
+    }
 
-.sidebarGroupContent {
-  max-height: 500px; /* 展開時の最大高さ（十分大きく） */
-  transition: max-height 0.3s cubic-bezier(.4,0,.2,1), opacity 0.3s;
-  overflow: hidden;
-  opacity: 1;
-}
-.sidebarGroupContent.collapsed {
-  max-height: 0;
-  opacity: 0;
-  pointer-events: none;
-  margin-top: 20px;
-}
+    .hamburger {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
 
-.mainContent {
-  margin-left: 0;
-  transition: none;
-}
+    .hamburger-line {
+      width: 18px;
+      height: 2px;
+      background: var(--tint);
+      border-radius: 2px;
+      transition: all .3s cubic-bezier(.32, .72, 0, 1);
+      transform-origin: center;
+    }
 
-.buttonGroup {
-  display:auto;
-  flex-direction:column;
-  align-items:center;
-  margin-bottom:16px;
-}
+    #toggleSidebarBtn.active .hamburger-line.middle {
+      transform: scaleX(0);
+      opacity: 0;
+    }
 
-.mainButton{
-display:auto;
-flex-direction:column;
-align-items:center;
-font-size:35px;
-font-weight:700;
-font-style:normal;
-padding:15px 25px;
-margin:8px;
-margin-bottom:8px;
-}
+    #toggleSidebarBtn.active .hamburger-line.top {
+      transform: translateY(6px) rotate(45deg);
+    }
 
-.subButton{
-font-size:15px;
-font-style:italic;
-padding:8px 13px;
-margin:8px;
-}
+    #toggleSidebarBtn.active .hamburger-line.bottom {
+      transform: translateY(-6px) rotate(-45deg);
+    }
 
-.label{
-font-size:26px;
-text-align:left;
-}
+    /* ── Overlay when sidebar is open ── */
+    #sidebarOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .18);
+      z-index: 999;
+      transition: opacity .35s;
+    }
 
-.stats{
-border-collapse: collapse;
-margin-left: auto;
-margin-right: auto;
-}
+    #sidebarOverlay.show {
+      display: block;
+    }
 
-.stats td{
-padding:6px 12px;
-}
+    /* ── Main Content ── */
+    .mainContent {
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 72px 20px 40px;
+    }
 
-.stat{
-font-size:30px;
-font-weight:bold;
-text-align:right;
-}
+    /* ── Stage Title ── */
+    #stageTitle {
+      font-size: 22px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 20px;
+      letter-spacing: -.02em;
+    }
 
-.stat{
-font-variant-numeric: tabular-nums;
-}
+    /* ── Button Group ── */
+    .buttonGroup {
+      margin-bottom: 20px;
+      text-align: center;
+    }
 
-.percent::after{
-content:"%";
-margin-left:2px;
-font-size:0.8em;
-}
+    .mainButtons {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
 
-.panel{
-margin-top:10px;
-}
+    .mainButton {
+      flex: 1;
+      font-size: 22px;
+      font-weight: 700;
+      font-family: inherit;
+      padding: 18px 0;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: transform .12s, box-shadow .12s;
+      color: #fff;
+      letter-spacing: -.01em;
+    }
 
-#editPanel{
-display:none;
-width:90%;
-max-width:400px;
-margin:auto;
-}
+    .mainButton:first-child {
+      background: linear-gradient(135deg, #34c759, #30b350);
+      box-shadow: 0 2px 12px rgba(52, 199, 89, .35);
+    }
 
-.editGrid{
-display:grid;
-grid-template-columns: 1fr 1fr;
-gap:15px;
-}
+    .mainButton:last-child {
+      background: linear-gradient(135deg, #ff6b6b, #ff3b30);
+      box-shadow: 0 2px 12px rgba(255, 59, 48, .30);
+    }
 
-input{
-width:80px;
-}
+    .mainButton:active {
+      transform: scale(.96);
+    }
 
-@keyframes flash {
-0% { background-color: white; }
-50% { background-color: #249646; }
-100% { background-color: white; }
-}
+    .subButton {
+      font-size: 13px;
+      font-family: inherit;
+      font-style: normal;
+      background: none;
+      border: none;
+      color: var(--tint);
+      cursor: pointer;
+      padding: 6px 12px;
+      font-weight: 500;
+      transition: opacity .15s;
+    }
 
-@keyframes flashRed {
-0% { background-color: white; }
-50% { background-color: #E60011; }
-100% { background-color: white; }
-}
-.flash{
-animation: flash 0.25s;
-}
-.flashRed{
-animation: flashRed 0.25s;
-}
-</style>
+    .subButton:hover {
+      opacity: .7;
+    }
+
+    /* ── Stats Card ── */
+    .panel {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+    }
+
+    .stats {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .stats tr:not(:last-child) td {
+      border-bottom: 1px solid var(--separator);
+    }
+
+    .stats td {
+      padding: 13px 18px;
+    }
+
+    .label {
+      font-size: 15px;
+      color: var(--label-secondary);
+      text-align: left;
+    }
+
+    .stat {
+      font-size: 20px;
+      font-weight: 600;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      color: var(--label-primary);
+    }
+
+    .percent::after {
+      content: "%";
+      margin-left: 1px;
+      font-size: .75em;
+      color: var(--label-secondary);
+    }
+
+    /* ── Edit Panel ── */
+    #editPanel {
+      display: none;
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--card-shadow);
+      padding: 24px 20px 20px;
+      margin-top: 16px;
+    }
+
+    #editPanel h3 {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .editGrid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .editGrid p {
+      font-size: 13px;
+      color: var(--label-secondary);
+      font-weight: 500;
+    }
+
+    .editGrid input {
+      display: block;
+      width: 100%;
+      margin-top: 5px;
+      padding: 10px 12px;
+      font-size: 16px;
+      font-family: inherit;
+      border: 1px solid var(--separator);
+      border-radius: 10px;
+      background: var(--bg);
+      color: var(--label-primary);
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      appearance: textfield;
+      -moz-appearance: textfield;
+    }
+
+    .editGrid input:focus {
+      border-color: var(--tint);
+      box-shadow: 0 0 0 3px rgba(0, 122, 255, .15);
+    }
+
+    .editActions {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .editActions .subButton {
+      flex: 1;
+      padding: 11px 0;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .editActions .subButton:first-child {
+      background: var(--tint);
+      color: #fff;
+    }
+
+    .editActions .subButton:last-child {
+      background: var(--bg);
+      color: var(--label-secondary);
+    }
+
+    /* ── Flash Animations ── */
+    @keyframes flash {
+      0% {
+        background-color: var(--bg)
+      }
+
+      50% {
+        background-color: rgba(52, 199, 89, .18)
+      }
+
+      100% {
+        background-color: var(--bg)
+      }
+    }
+
+    @keyframes flashRed {
+      0% {
+        background-color: var(--bg)
+      }
+
+      50% {
+        background-color: rgba(255, 59, 48, .15)
+      }
+
+      100% {
+        background-color: var(--bg)
+      }
+    }
+
+    .flash {
+      animation: flash .25s ease
+    }
+
+    .flashRed {
+      animation: flashRed .25s ease
+    }
+
+    /* ── Dark Mode Overrides ── */
+    html.dark {
+      --bg: #1c1c1e;
+      --card: #2c2c2e;
+      --separator: rgba(255, 255, 255, .12);
+      --label-primary: rgba(255, 255, 255, .85);
+      --label-secondary: rgba(235, 235, 245, .6);
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, .24), 0 1px 2px rgba(0, 0, 0, .16);
+    }
+
+    html.dark #sidebar {
+      background: rgba(44, 44, 46, .88);
+    }
+
+    html.dark #toggleSidebarBtn {
+      background: rgba(44, 44, 46, .72);
+    }
+
+    html.dark #toggleSidebarBtn:hover {
+      background: rgba(58, 58, 60, .92);
+    }
+
+    html.dark #sidebarOverlay {
+      background: rgba(0, 0, 0, .45);
+    }
+
+    html.dark #sidebar .stageBtn:hover {
+      background: rgba(255, 255, 255, .06);
+    }
+
+    html.dark #sidebar .stageBtn:active {
+      background: rgba(255, 255, 255, .1);
+    }
+
+    html.dark .editGrid input {
+      border-color: rgba(255, 255, 255, .15);
+    }
+
+    /* ── Danger (destructive action) ── */
+    .danger {
+      color: var(--red) !important;
+    }
+
+    /* ── Dark Mode Toggle ── */
+    .darkModeRow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-top: 1px solid var(--separator);
+      margin-top: auto;
+    }
+
+    .darkModeLabel {
+      font-size: 15px;
+      color: var(--label-primary);
+    }
+
+    .toggle {
+      position: relative;
+      width: 51px;
+      height: 31px;
+      background: rgba(120, 120, 128, .32);
+      border-radius: 16px;
+      border: none;
+      cursor: pointer;
+      transition: background .3s;
+      padding: 0;
+      flex-shrink: 0;
+    }
+
+    .toggle.on {
+      background: var(--green);
+    }
+
+    .toggle::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 27px;
+      height: 27px;
+      background: #fff;
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .2);
+      transition: transform .3s cubic-bezier(.32, .72, 0, 1);
+    }
+
+    .toggle.on::after {
+      transform: translateX(20px);
+    }
+
+    /* ── Theme Transition ── */
+    html,
+    .panel,
+    #toggleSidebarBtn,
+    .editGrid input {
+      transition: background-color .3s, color .3s, border-color .3s, box-shadow .3s;
+    }
+  </style>
+
+  <script>
+    // Prevent flash of wrong theme on load
+    if (localStorage.getItem('darkMode') === 'true') {
+      document.documentElement.classList.add('dark');
+    }
+  </script>
 </head>
 
 <body>
 
-<button id="toggleSidebarBtn" onclick="toggleSidebar()">
-  <span class="hamburger">
-    <span class="hamburger-line top"></span>
-    <span class="hamburger-line middle"></span>
-    <span class="hamburger-line bottom"></span>
-  </span>
-</button>
-<div id="sidebar">
+  <button id="toggleSidebarBtn" onclick="toggleSidebar()">
+    <span class="hamburger">
+      <span class="hamburger-line top"></span>
+      <span class="hamburger-line middle"></span>
+      <span class="hamburger-line bottom"></span>
+    </span>
+  </button>
+  <div id="sidebarOverlay" onclick="toggleSidebar()"></div>
+  <div id="sidebar">
     <div class="sidebarGroup">
-        <div class="sidebarGroupTitle">天魔の孤城</div>
-        <button class="stageBtn" id="stageBtn0" onclick="selectStage(0)">アーキレット</button>
-        <button class="stageBtn" id="stageBtn1" onclick="selectStage(1)">コルティーナ</button>
+      <div class="sidebarGroupTitle">天魔の孤城</div>
+      <button class="stageBtn" id="stageBtn0" onclick="selectStage(0)">アーキレット</button>
+      <button class="stageBtn" id="stageBtn1" onclick="selectStage(1)">コルティーナ</button>
     </div>
     <div class="sidebarGroup">
-        <div class="sidebarGroupTitle">破界の星墓</div>
-        <button class="stageBtn" id="stageBtn2" onclick="selectStage(2)">アムネディア</button>
+      <div class="sidebarGroupTitle">破界の星墓</div>
+      <button class="stageBtn" id="stageBtn2" onclick="selectStage(2)">アムネディア</button>
     </div>
     <div class="sidebarGroup">
-        <div class="sidebarGroupTitle" onclick="toggleGroup(this)">禁忌の獄(展開▼)</div>
-        <div class="sidebarGroupContent collapsed">
-            <button class="stageBtn" id="stageBtn4" onclick="selectStage(4)">刹那</button>
-            <button class="stageBtn" id="stageBtn5" onclick="selectStage(5)">那由多</button>
-            <button class="stageBtn" id="stageBtn6" onclick="selectStage(6)">阿頼耶</button>
-            <button class="stageBtn" id="stageBtn7" onclick="selectStage(7)">無量大数</button>
-            <button class="stageBtn" id="stageBtn8" onclick="selectStage(8)">涅槃寂静</button>
-            <button class="stageBtn" id="stageBtn9" onclick="selectStage(9)">不可思議</button>
-        </div>
+      <div class="sidebarGroupTitle" onclick="toggleGroup(this)">禁忌の獄(展開▼)</div>
+      <div class="sidebarGroupContent collapsed">
+        <button class="stageBtn" id="stageBtn4" onclick="selectStage(4)">刹那</button>
+        <button class="stageBtn" id="stageBtn5" onclick="selectStage(5)">那由多</button>
+        <button class="stageBtn" id="stageBtn6" onclick="selectStage(6)">阿頼耶</button>
+        <button class="stageBtn" id="stageBtn7" onclick="selectStage(7)">無量大数</button>
+        <button class="stageBtn" id="stageBtn8" onclick="selectStage(8)">涅槃寂静</button>
+        <button class="stageBtn" id="stageBtn9" onclick="selectStage(9)">不可思議</button>
+      </div>
     </div>
     <div class="sidebarGroup">
-        <div class="sidebarGroupTitle">その他</div>
-        <button class="stageBtn" id="stageBtn3" onclick="selectStage(3)">自由枠</button>
-        <button class="stageBtn" onclick="if(confirm('全てのデータをリセットするかめか？')){localStorage.removeItem('stageTrackerAll'); localStorage.removeItem('stageIndex'); location.reload();}">初期化</button>
+      <div class="sidebarGroupTitle">その他</div>
+      <button class="stageBtn" id="stageBtn3" onclick="selectStage(3)">自由枠</button>
     </div>
-</div>
-
-<div class="mainContent" id="mainContent">
-
-<h2 id="stageTitle">&#x1f422;EX MAS-turtle&#x1f54a;</h2>
-
-<div class="buttonGroup">
-  <div class="mainButtons">
-    <button class="mainButton" onclick="normal()">+1&#x1f422;</button>
-    <button class="mainButton" onclick="extra()">EX&#x1f54a;</button>
+    <div class="darkModeRow">
+      <span class="darkModeLabel">ダークモード</span>
+      <button class="toggle" id="darkToggle" onclick="toggleDarkMode()"></button>
+    </div>
+    <button class="stageBtn danger"
+      onclick="if(confirm('全てのデータをリセットするかめか？')){localStorage.removeItem('stageTrackerAll'); localStorage.removeItem('stageIndex'); location.reload();}">初期化</button>
   </div>
-  <button class="subButton" onclick="openEdit()">EDit&#x270f;</button>
-</div>
 
-<div class="panel">
+  <div class="mainContent" id="mainContent">
 
-<table class="stats">
+    <h2 id="stageTitle">&#x1f422;EX MAS-turtle&#x1f54a;</h2>
 
-<tr>
-<td class="label">現在周回&#x1f422;</td>
-<td class="stat" id="current"></td>
-</tr>
+    <div class="buttonGroup">
+      <div class="mainButtons">
+        <button class="mainButton" onclick="normal()">+1&#x1f422;</button>
+        <button class="mainButton" onclick="extra()">EX&#x1f54a;</button>
+      </div>
+      <button class="subButton" onclick="openEdit()">EDit&#x270f;</button>
+    </div>
 
-<tr>
-<td class="label">総周回&#x1f422;</td>
-<td class="stat" id="normalTotal"></td>
-</tr>
+    <div class="panel">
+      <table class="stats">
+        <tr>
+          <td class="label">現在周回&#x1f422;</td>
+          <td class="stat" id="current"></td>
+        </tr>
+        <tr>
+          <td class="label">総周回&#x1f422;</td>
+          <td class="stat" id="normalTotal"></td>
+        </tr>
+        <tr>
+          <td class="label">EX出現&#x1f54a;</td>
+          <td class="stat" id="extraTotal"></td>
+        </tr>
+        <tr>
+          <td class="label">ラック&#x1f340;</td>
+          <td class="stat" id="rewardTotal"></td>
+        </tr>
+        <tr>
+          <td class="label">最高ハマり&#x1f422;</td>
+          <td class="stat" id="max"></td>
+        </tr>
+        <tr>
+          <td class="label">EX出現率&#x1f54a;</td>
+          <td class="stat percent" id="rate"></td>
+        </tr>
+      </table>
+    </div>
 
-<tr>
-<td class="label">EX出現&#x1f54a;</td>
-<td class="stat" id="extraTotal"></td>
-</tr>
+    <div id="editPanel">
 
-<tr>
-<td class="label">ラック&#x1f340;</td>
-<td class="stat" id="rewardTotal"></td>
-</tr>
+      <h3>&#x1f235; EDit &#x1f338;</h3>
 
-<tr>
-<td class="label">最高ハマり&#x1f422;</td>
-<td class="stat" id="max"></td>
-</tr>
+      <div class="editGrid">
 
-<tr>
-<td class="label">EX出現率&#x1f54a;</td>
-<td class="stat percent" id="rate"></td>
-</tr>
+        <p>
+          現在周回<br>
+          <input id="editCurrent" type="number" min="0">
+        </p>
 
-</table>
-</div>
+        <p>
+          総周回<br>
+          <input id="editNormal" type="number" min="0">
+        </p>
 
-<div id="editPanel">
+        <p>
+          EX出現<br>
+          <input id="editExtra" type="number" min="0">
+        </p>
 
-<div class="editGrid">
+        <p>
+          ラック<br>
+          <input id="editReward" type="number" min="0">
+        </p>
 
-<h3>&#x1f235; EDit &#x1f338;</h3>
+        <p>
+          最高ハマり<br>
+          <input id="editMax" type="number" min="0">
+        </p>
 
-<p>
-現在周回<br>
-<input id="editCurrent" type="number" min="0">
-</p>
+      </div>
 
-<p>
-総周回<br>
-<input id="editNormal" type="number" min="0">
-</p>
+      <div class="editActions">
+        <button class="subButton" onclick="saveEdit()">Save&#x1f4dd;</button>
+        <button class="subButton" onclick="cancelEdit()">Cancel&#x274e;</button>
+      </div>
 
-<p>
-EX出現<br>
-<input id="editExtra" type="number" min="0">
-</p>
+    </div>
+  </div>
 
-<p>
-ラック<br>
-<input id="editReward" type="number" min="0">
-</p>
+  <script>
+    const STAGE_COUNT = 10;
+    const STAGE_NAMES = ["🔴アーキレット", "🟣コルティーナ", "🟢アムネディア", "その他", "🟡刹那", "🟣那由多", "🔵阿頼耶", "🔴無量大数", "🟢涅槃寂静", "🟡不可思議"];
+    let stageIndex = Number(localStorage.getItem("stageIndex")) || 0;
 
-<p>
-最高ハマり<br>
-<input id="editMax" type="number" min="0">
-</p>
+    let allData = JSON.parse(localStorage.getItem("stageTrackerAll")) || [
+      { normalClears: 0, extraAppearances: 0, extraRewards: 0, currentStreak: 0, maxStreak: 0 },
+      { normalClears: 0, extraAppearances: 0, extraRewards: 0, currentStreak: 0, maxStreak: 0 },
+      { normalClears: 0, extraAppearances: 0, extraRewards: 0, currentStreak: 0, maxStreak: 0 },
+      { normalClears: 0, extraAppearances: 0, extraRewards: 0, currentStreak: 0, maxStreak: 0 },
+      { normalClears: 0, extraAppearances: 0, extraRewards: 0, currentStreak: 0, maxStreak: 0 },
+      { normalClears: 0, extraAppearances: 0, extraRewards: 0, currentStreak: 0, maxStreak: 0 },
+      { normalClears: 0, extraAppearances: 0, extraRewards: 0, currentStreak: 0, maxStreak: 0 },
+      { normalClears: 0, extraAppearances: 0, extraRewards: 0, currentStreak: 0, maxStreak: 0 },
+      { normalClears: 0, extraAppearances: 0, extraRewards: 0, currentStreak: 0, maxStreak: 0 },
+      { normalClears: 0, extraAppearances: 0, extraRewards: 0, currentStreak: 0, maxStreak: 0 },
+    ];
 
-</div>
-
-<button class="subButton" onclick="saveEdit()">Save&#x1f4dd;</button>
-<button class="subButton" onclick="cancelEdit()">Cancel&#x274e;</button>
-
-</div>
-</div>
-
-<script>
-const STAGE_COUNT = 10;
-const STAGE_NAMES = ["🔴アーキレット", "🟣コルティーナ", "🟢アムネディア", "その他", "🟡刹那", "🟣那由多", "🔵阿頼耶", "🔴無量大数", "🟢涅槃寂静", "🟡不可思議"];
-let stageIndex = Number(localStorage.getItem("stageIndex")) || 0;
-
-let allData = JSON.parse(localStorage.getItem("stageTrackerAll")) || [
-  { normalClears:0, extraAppearances:0, extraRewards:0, currentStreak:0, maxStreak:0 },
-  { normalClears:0, extraAppearances:0, extraRewards:0, currentStreak:0, maxStreak:0 },
-  { normalClears:0, extraAppearances:0, extraRewards:0, currentStreak:0, maxStreak:0 },
-  { normalClears:0, extraAppearances:0, extraRewards:0, currentStreak:0, maxStreak:0 },
-  { normalClears:0, extraAppearances:0, extraRewards:0, currentStreak:0, maxStreak:0 },
-  { normalClears:0, extraAppearances:0, extraRewards:0, currentStreak:0, maxStreak:0 },
-  { normalClears:0, extraAppearances:0, extraRewards:0, currentStreak:0, maxStreak:0 },
-  { normalClears:0, extraAppearances:0, extraRewards:0, currentStreak:0, maxStreak:0 },
-  { normalClears:0, extraAppearances:0, extraRewards:0, currentStreak:0, maxStreak:0 },
-  { normalClears:0, extraAppearances:0, extraRewards:0, currentStreak:0, maxStreak:0 },
-];
-
-while(allData.length < STAGE_COUNT){
-  allData.push({
-    normalClears:0,
-    extraAppearances:0,
-    extraRewards:0,
-    currentStreak:0,
-    maxStreak:0
-  });
-}
-
-function saveAll(){
-  localStorage.setItem("stageTrackerAll", JSON.stringify(allData));
-  localStorage.setItem("stageIndex", stageIndex);
-}
-
-function getData(){
-  return allData[stageIndex];
-}
-
-function setData(d){
-  allData[stageIndex] = d;
-  saveAll();
-}
-
-function flashScreen(color="flash"){
-  document.body.classList.add(color)
-  setTimeout(()=>{
-    document.body.classList.remove(color)
-  },250)
-}
-
-function save(){
-  setData(getData());
-  update();
-}
-
-function normal(){
-  let data = getData();
-  data.normalClears++;
-  data.currentStreak++;
-  if (data.currentStreak > data.maxStreak) {
-    data.maxStreak = data.currentStreak;
-  }
-  save();
-  flashScreen("flash");
-}
-
-function extra(){
-  let data = getData();
-
-  let reward;
-  while(true){
-    reward = prompt("ドロップ数を入力するかめね、負けたらそのまま「OK」かめね");
-    if(reward === null){
-      // キャンセルは何も加算せず、flashScreenもせずに終わる
-      break;
+    while (allData.length < STAGE_COUNT) {
+      allData.push({
+        normalClears: 0,
+        extraAppearances: 0,
+        extraRewards: 0,
+        currentStreak: 0,
+        maxStreak: 0
+      });
     }
-    if(reward.trim().length === 0){
-      // 入力されてない状態のOKは0として扱う
-      data.extraRewards += 0;
-      break;
+
+    function saveAll() {
+      localStorage.setItem("stageTrackerAll", JSON.stringify(allData));
+      localStorage.setItem("stageIndex", stageIndex);
     }
-    const n = Number(reward);
-    if(!Number.isFinite(n) || n < 0){
-      alert("0以上の数字を入力するかめね");
-      continue;
+
+    function getData() {
+      return allData[stageIndex];
     }
-    data.extraRewards += Math.floor(n);
-    break;
-  }
 
-  if(reward !== null){
-    data.extraAppearances++;
-    if(data.currentStreak > data.maxStreak){
-      data.maxStreak = data.currentStreak;
+    function setData(d) {
+      allData[stageIndex] = d;
+      saveAll();
     }
-    data.currentStreak = 0;
-    save();
-    flashScreen("flashRed");
-  }
-}
 
-function update(){
-  let data = getData();
-  document.getElementById("normalTotal").textContent = data.normalClears;
-  document.getElementById("extraTotal").textContent = data.extraAppearances;
-  document.getElementById("rewardTotal").textContent = data.extraRewards;
-  document.getElementById("current").textContent = data.currentStreak;
-  document.getElementById("max").textContent = data.maxStreak;
-  let rate = 0;
-  if(data.normalClears > 0){
-    rate = (data.extraAppearances / data.normalClears * 100).toFixed(2);
-  }
-  document.getElementById("rate").textContent = rate;
-  document.getElementById("stageTitle").innerHTML = `${STAGE_NAMES[stageIndex]}`;
-  for(let i=0;i<STAGE_COUNT;i++){
-    let btn = document.getElementById(`stageBtn${i}`);
-    if(btn) btn.classList.toggle("active", i===stageIndex);
-  }
-}
-
-function openEdit(){
-  let data = getData();
-  editPanel.style.display = "block";
-  editNormal.value = data.normalClears;
-  editExtra.value = data.extraAppearances;
-  editReward.value = data.extraRewards;
-  editCurrent.value = data.currentStreak;
-  editMax.value = data.maxStreak;
-}
-
-function cancelEdit(){
-  editPanel.style.display = "none";
-}
-
-function validate(d){
-  if(d.extraAppearances > d.normalClears)
-    return "EX出現が総周回を超えてるかめね";
-  if(d.currentStreak > d.normalClears)
-    return "現在周回が総周回を超えてるかめね";
-  if(d.extraRewards < 0)
-    return "ラックは0以上かめね";
-  return null;
-}
-
-function saveEdit(){
-  let newData = {
-    normalClears:Number(editNormal.value),
-    extraAppearances:Number(editExtra.value),
-    extraRewards:Number(editReward.value),
-    currentStreak:Number(editCurrent.value),
-    maxStreak:Number(editMax.value)
-  }
-  let error = validate(newData);
-  if(error){
-    alert(error);
-    return;
-  }
-  setData(newData);
-  editPanel.style.display = "none";
-  update();
-}
-
-function toggleSidebar(){
-  const sidebar = document.getElementById("sidebar");
-  const btn = document.getElementById("toggleSidebarBtn");
-  sidebar.classList.toggle("open");
-  btn.classList.toggle("active");
-}
-
-function selectStage(idx){
-  stageIndex = idx;
-  saveAll();
-  toggleSidebar();
-  update();
-}
-
-function toggleGroup(titleElem) {
-  const content = titleElem.nextElementSibling;
-  content.classList.toggle('collapsed');
-}
-
-window.addEventListener("DOMContentLoaded", () => {
-  for (let i = 0; i < allData.length; i++) {
-    if (allData[i].currentStreak > allData[i].maxStreak) {
-      allData[i].maxStreak = allData[i].currentStreak;
+    function flashScreen(color = "flash") {
+      document.body.classList.add(color)
+      setTimeout(() => {
+        document.body.classList.remove(color)
+      }, 250)
     }
-  }
-  saveAll();
-  update();
-});
-</script>
+
+    function save() {
+      setData(getData());
+      update();
+    }
+
+    function normal() {
+      let data = getData();
+      data.normalClears++;
+      data.currentStreak++;
+      if (data.currentStreak > data.maxStreak) {
+        data.maxStreak = data.currentStreak;
+      }
+      save();
+      flashScreen("flash");
+    }
+
+    function extra() {
+      let data = getData();
+
+      let reward;
+      while (true) {
+        reward = prompt("ドロップ数を入力するかめね、負けたらそのまま「OK」かめね");
+        if (reward === null) {
+          break;
+        }
+        if (reward.trim().length === 0) {
+          data.extraRewards += 0;
+          break;
+        }
+        const n = Number(reward);
+        if (!Number.isFinite(n) || n < 0) {
+          alert("0以上の数字を入力するかめね");
+          continue;
+        }
+        data.extraRewards += Math.floor(n);
+        break;
+      }
+
+      if (reward !== null) {
+        data.extraAppearances++;
+        if (data.currentStreak > data.maxStreak) {
+          data.maxStreak = data.currentStreak;
+        }
+        data.currentStreak = 0;
+        save();
+        flashScreen("flashRed");
+      }
+    }
+
+    function update() {
+      let data = getData();
+      document.getElementById("normalTotal").textContent = data.normalClears;
+      document.getElementById("extraTotal").textContent = data.extraAppearances;
+      document.getElementById("rewardTotal").textContent = data.extraRewards;
+      document.getElementById("current").textContent = data.currentStreak;
+      document.getElementById("max").textContent = data.maxStreak;
+      let rate = 0;
+      if (data.normalClears > 0) {
+        rate = (data.extraAppearances / data.normalClears * 100).toFixed(2);
+      }
+      document.getElementById("rate").textContent = rate;
+      document.getElementById("stageTitle").innerHTML = `${STAGE_NAMES[stageIndex]}`;
+      for (let i = 0; i < STAGE_COUNT; i++) {
+        let btn = document.getElementById(`stageBtn${i}`);
+        if (btn) btn.classList.toggle("active", i === stageIndex);
+      }
+    }
+
+    function openEdit() {
+      let data = getData();
+      editPanel.style.display = "block";
+      editNormal.value = data.normalClears;
+      editExtra.value = data.extraAppearances;
+      editReward.value = data.extraRewards;
+      editCurrent.value = data.currentStreak;
+      editMax.value = data.maxStreak;
+    }
+
+    function cancelEdit() {
+      editPanel.style.display = "none";
+    }
+
+    function validate(d) {
+      if (d.extraAppearances > d.normalClears)
+        return "EX出現が総周回を超えてるかめね";
+      if (d.currentStreak > d.normalClears)
+        return "現在周回が総周回を超えてるかめね";
+      if (d.extraRewards < 0)
+        return "ラックは0以上かめね";
+      return null;
+    }
+
+    function saveEdit() {
+      let newData = {
+        normalClears: Number(editNormal.value),
+        extraAppearances: Number(editExtra.value),
+        extraRewards: Number(editReward.value),
+        currentStreak: Number(editCurrent.value),
+        maxStreak: Number(editMax.value)
+      }
+      let error = validate(newData);
+      if (error) {
+        alert(error);
+        return;
+      }
+      setData(newData);
+      editPanel.style.display = "none";
+      update();
+    }
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById("sidebar");
+      const btn = document.getElementById("toggleSidebarBtn");
+      const overlay = document.getElementById("sidebarOverlay");
+      sidebar.classList.toggle("open");
+      btn.classList.toggle("active");
+      overlay.classList.toggle("show");
+    }
+
+    function selectStage(idx) {
+      stageIndex = idx;
+      saveAll();
+      toggleSidebar();
+      update();
+    }
+
+    function toggleGroup(titleElem) {
+      const content = titleElem.nextElementSibling;
+      content.classList.toggle('collapsed');
+    }
+
+    function toggleDarkMode() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('darkMode', isDark);
+      document.getElementById('darkToggle').classList.toggle('on', isDark);
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      // Sync toggle button state with saved preference
+      const isDark = document.documentElement.classList.contains('dark');
+      document.getElementById('darkToggle').classList.toggle('on', isDark);
+
+      for (let i = 0; i < allData.length; i++) {
+        if (allData[i].currentStreak > allData[i].maxStreak) {
+          allData[i].maxStreak = allData[i].currentStreak;
+        }
+      }
+      saveAll();
+      update();
+    });
+  </script>
 
 </body>
+
 </html>
