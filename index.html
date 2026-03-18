@@ -17,7 +17,10 @@
     *::after {
       box-sizing: border-box;
       margin: 0;
-      padding: 0
+      padding: 0;
+      touch-action: manipulation; /* Disables double-tap to zoom */
+      -webkit-user-select: none; /* Prevents text selection on rapid tapping */
+      user-select: none;
     }
 
     :root {
@@ -25,7 +28,7 @@
       --card: #fff;
       --separator: rgba(60, 60, 67, .12);
       --label-primary: rgba(0, 0, 0, .85);
-      --label-secondary: rgba(60, 60, 67, .85);
+      --label-secondary: rgba(60, 60, 67, .6);
       --tint: #007aff;
       --green: #34c759;
       --red: #ff3b30;
@@ -361,6 +364,12 @@
     .editGrid input:focus {
       border-color: var(--tint);
       box-shadow: 0 0 0 3px rgba(0, 122, 255, .15);
+    }
+
+    /* Allow selection inside inputs */
+    input {
+      -webkit-user-select: auto;
+      user-select: auto;
     }
 
     .editActions {
@@ -701,10 +710,14 @@
     }
 
     function flashScreen(color = "flash") {
-      document.body.classList.add(color)
-      setTimeout(() => {
-        document.body.classList.remove(color)
-      }, 250)
+      const el = document.body;
+      el.classList.remove("flash", "flashRed");
+      void el.offsetWidth; // Force reflow to restart animation
+      el.classList.add(color);
+      el.addEventListener("animationend", function cleanup() {
+        el.classList.remove(color);
+        el.removeEventListener("animationend", cleanup);
+      });
     }
 
     function save() {
