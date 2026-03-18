@@ -18,8 +18,10 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      touch-action: manipulation; /* Disables double-tap to zoom */
-      -webkit-user-select: none; /* Prevents text selection on rapid tapping */
+      touch-action: manipulation;
+      /* Disables double-tap to zoom */
+      -webkit-user-select: none;
+      /* Prevents text selection on rapid tapping */
       user-select: none;
     }
 
@@ -765,7 +767,7 @@
         }
         data.currentStreak = 0;
         save();
-        flashScreen("flashRed");
+        setTimeout(() => flashScreen("flashRed"), 50);
       }
     }
 
