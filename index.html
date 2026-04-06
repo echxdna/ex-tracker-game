@@ -34,6 +34,19 @@
       --tint: #007aff;
       --green: #34c759;
       --red: #ff3b30;
+      /* -- Apple Colors -- */
+      --sys-red: #ff3b30;
+      --sys-purple: #af52de;
+      --sys-green: #34c759;
+      --sys-yellow: #ffcc00;
+      --sys-blue: #007aff;
+      --sys-gray: #8e8e93;
+      --bg-red: rgba(255, 59, 48, 0.08);
+      --bg-purple: rgba(175, 82, 222, 0.08);
+      --bg-green: rgba(52, 199, 89, 0.08);
+      --bg-yellow: rgba(255, 204, 0, 0.12);
+      --bg-blue: rgba(0, 122, 255, 0.08);
+      --bg-gray: rgba(142, 142, 147, 0.08);
       --radius: 14px;
       --card-shadow: 0 1px 3px rgba(0, 0, 0, .08), 0 1px 2px rgba(0, 0, 0, .04);
     }
@@ -106,8 +119,9 @@
     }
 
     #sidebar .stageBtn {
-      display: block;
-      width: 100%;
+      display: flex;
+      align-items: center;
+      width: calc(100% - 16px);
       text-align: left;
       background: none;
       border: none;
@@ -118,8 +132,7 @@
       cursor: pointer;
       border-radius: 10px;
       margin: 1px 8px;
-      width: calc(100% - 16px);
-      transition: background .15s;
+      transition: all .2s;
     }
 
     #sidebar .stageBtn:hover {
@@ -128,12 +141,23 @@
 
     #sidebar .stageBtn:active {
       background: rgba(0, 0, 0, .08);
+      transform: scale(0.98);
     }
 
     #sidebar .stageBtn.active {
-      background: var(--tint);
-      color: #fff;
+      background: var(--stage-bg);
+      color: var(--label-primary);
       font-weight: 600;
+    }
+
+    .status-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 8px;
+      flex-shrink: 0;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
 
     /* ── Hamburger / Toggle ── */
@@ -443,6 +467,18 @@
       --label-primary: rgba(255, 255, 255, .85);
       --label-secondary: rgba(235, 235, 245, .6);
       --card-shadow: 0 1px 3px rgba(0, 0, 0, .24), 0 1px 2px rgba(0, 0, 0, .16);
+      --sys-red: #ff453a;
+      --sys-purple: #bf5af2;
+      --sys-green: #30d158;
+      --sys-yellow: #ffd60a;
+      --sys-blue: #0a84ff;
+      --sys-gray: #98989d;
+      --bg-red: rgba(255, 69, 58, 0.15);
+      --bg-purple: rgba(191, 90, 242, 0.15);
+      --bg-green: rgba(48, 209, 88, 0.15);
+      --bg-yellow: rgba(255, 214, 10, 0.15);
+      --bg-blue: rgba(10, 132, 255, 0.15);
+      --bg-gray: rgba(152, 152, 157, 0.15);
     }
 
     html.dark #sidebar {
@@ -563,6 +599,7 @@
     <div class="sidebarGroup">
       <div class="sidebarGroupTitle">破界の星墓</div>
       <button class="stageBtn" id="stageBtn2" onclick="selectStage(2)">アムネディア</button>
+      <button class="stageBtn" id="stageBtn10" onclick="selectStage(10)">インゼムニア</button>
     </div>
     <div class="sidebarGroup">
       <div class="sidebarGroupTitle" onclick="toggleGroup(this)">禁忌の獄(展開▼)</div>
@@ -630,7 +667,7 @@
 
     <div id="editPanel">
 
-      <h3>&#x1f235; EDit &#x1f338;</h3>
+      <h3>データ編集</h3>
 
       <div class="editGrid">
 
@@ -662,19 +699,32 @@
       </div>
 
       <div class="editActions">
-        <button class="subButton" onclick="saveEdit()">Save&#x1f4dd;</button>
-        <button class="subButton" onclick="cancelEdit()">Cancel&#x274e;</button>
+        <button class="subButton" onclick="saveEdit()">保存</button>
+        <button class="subButton" onclick="cancelEdit()">キャンセル</button>
       </div>
 
     </div>
   </div>
 
   <script>
-    const STAGE_COUNT = 10;
-    const STAGE_NAMES = ["🔴アーキレット", "🟣コルティーナ", "🟢アムネディア", "その他", "🟡刹那", "🟣那由多", "🔵阿頼耶", "🔴無量大数", "🟢涅槃寂静", "🟡不可思議"];
+    const STAGE_COUNT = 11;
+    const STAGE_CONFIG = [
+      { name: "アーキレット", color: "var(--sys-red)", bg: "var(--bg-red)" },
+      { name: "コルティーナ", color: "var(--sys-purple)", bg: "var(--bg-purple)" },
+      { name: "アムネディア", color: "var(--sys-green)", bg: "var(--bg-green)" },
+      { name: "その他", color: "var(--sys-gray)", bg: "var(--bg-gray)" },
+      { name: "刹那", color: "var(--sys-yellow)", bg: "var(--bg-yellow)" },
+      { name: "那由多", color: "var(--sys-purple)", bg: "var(--bg-purple)" },
+      { name: "阿頼耶", color: "var(--sys-blue)", bg: "var(--bg-blue)" },
+      { name: "無量大数", color: "var(--sys-red)", bg: "var(--bg-red)" },
+      { name: "涅槃寂静", color: "var(--sys-green)", bg: "var(--bg-green)" },
+      { name: "不可思議", color: "var(--sys-yellow)", bg: "var(--bg-yellow)" },
+      { name: "インゼムニア", color: "var(--sys-yellow)", bg: "var(--bg-yellow)" }
+    ];
     let stageIndex = Number(localStorage.getItem("stageIndex")) || 0;
 
     let allData = JSON.parse(localStorage.getItem("stageTrackerAll")) || [
+      { normalClears: 0, extraAppearances: 0, extraRewards: 0, currentStreak: 0, maxStreak: 0 },
       { normalClears: 0, extraAppearances: 0, extraRewards: 0, currentStreak: 0, maxStreak: 0 },
       { normalClears: 0, extraAppearances: 0, extraRewards: 0, currentStreak: 0, maxStreak: 0 },
       { normalClears: 0, extraAppearances: 0, extraRewards: 0, currentStreak: 0, maxStreak: 0 },
@@ -783,7 +833,8 @@
         rate = (data.extraAppearances / data.normalClears * 100).toFixed(2);
       }
       document.getElementById("rate").textContent = rate;
-      document.getElementById("stageTitle").innerHTML = `${STAGE_NAMES[stageIndex]}`;
+      let conf = STAGE_CONFIG[stageIndex];
+      document.getElementById("stageTitle").innerHTML = `<span class="status-dot" style="background: ${conf.color}"></span>${conf.name}`;
       for (let i = 0; i < STAGE_COUNT; i++) {
         let btn = document.getElementById(`stageBtn${i}`);
         if (btn) btn.classList.toggle("active", i === stageIndex);
@@ -791,6 +842,10 @@
     }
 
     function openEdit() {
+      if (editPanel.style.display === "block") {
+        editPanel.style.display = "none";
+        return;
+      }
       let data = getData();
       editPanel.style.display = "block";
       editNormal.value = data.normalClears;
@@ -839,6 +894,11 @@
       sidebar.classList.toggle("open");
       btn.classList.toggle("active");
       overlay.classList.toggle("show");
+      const isOpen = sidebar.classList.contains("open");
+      document.body.style.overflow = isOpen ? "hidden" : "";
+      if (isOpen) {
+        cancelEdit();
+      }
     }
 
     function selectStage(idx) {
@@ -863,6 +923,15 @@
       // Sync toggle button state with saved preference
       const isDark = document.documentElement.classList.contains('dark');
       document.getElementById('darkToggle').classList.toggle('on', isDark);
+
+      for (let i = 0; i < STAGE_COUNT; i++) {
+        let btn = document.getElementById(`stageBtn${i}`);
+        if (btn) {
+          let conf = STAGE_CONFIG[i];
+          btn.innerHTML = `${conf.name}`;
+          btn.style.setProperty('--stage-bg', conf.bg);
+        }
+      }
 
       for (let i = 0; i < allData.length; i++) {
         if (allData[i].currentStreak > allData[i].maxStreak) {
