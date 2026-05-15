@@ -1,0 +1,781 @@
+/* ── Reset & Base ── */
+    @font-face {
+      font-family: 'Reggae One';
+      src: url('./fonts/ReggaeOne-Regular.woff2') format('woff2');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      touch-action: manipulation;
+      /* Disables double-tap to zoom */
+      -webkit-user-select: none;
+      /* Prevents text selection on rapid tapping */
+      user-select: none;
+    }
+
+    :root {
+      --bg: #f2f2f7;
+      --card: #fff;
+      --separator: rgba(60, 60, 67, .12);
+      --label-primary: rgba(0, 0, 0, .85);
+      --label-secondary: rgba(60, 60, 67, .6);
+      --tint: #007aff;
+      --green: #34c759;
+      --red: #ff3b30;
+      /* -- Apple Colors -- */
+      --sys-red: #ff3b30;
+      --sys-purple: #af52de;
+      --sys-green: #34c759;
+      --sys-yellow: #ffcc00;
+      --sys-blue: #007aff;
+      --sys-gray: #8e8e93;
+      --bg-red: rgba(255, 59, 48, 0.08);
+      --bg-purple: rgba(175, 82, 222, 0.08);
+      --bg-green: rgba(52, 199, 89, 0.08);
+      --bg-yellow: rgba(255, 204, 0, 0.12);
+      --bg-blue: rgba(0, 122, 255, 0.08);
+      --bg-gray: rgba(142, 142, 147, 0.08);
+      --radius: 14px;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, .08), 0 1px 2px rgba(0, 0, 0, .04);
+    }
+
+    html {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background: var(--bg);
+      color: var(--label-primary);
+    }
+
+    body {
+      min-height: 100dvh;
+      padding: 0;
+      margin: 0;
+    }
+
+    /* ── Sidebar ── */
+    #sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 280px;
+      height: 100%;
+      background: rgba(255, 255, 255, .82);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      z-index: 1000;
+      padding: 68px 0 32px;
+      transform: translateX(-280px);
+      transition: transform .35s cubic-bezier(.32, .72, 0, 1), background-color .3s, border-color .3s;
+      overflow-y: auto;
+      border-right: 1px solid var(--separator);
+    }
+
+    #sidebar.open {
+      transform: translateX(0);
+    }
+
+    .sidebarGroup {
+      margin-bottom: 6px;
+    }
+
+    .sidebarGroupTitle {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: var(--label-secondary);
+      padding: 20px 20px 6px;
+      cursor: default;
+    }
+
+    /* make collapsible title clickable */
+    .sidebarGroupTitle[onclick] {
+      cursor: pointer;
+    }
+
+    .sidebarGroupContent {
+      max-height: 500px;
+      transition: max-height .35s cubic-bezier(.32, .72, 0, 1), opacity .3s;
+      overflow: hidden;
+      opacity: 1;
+    }
+
+    .sidebarGroupContent.collapsed {
+      max-height: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #sidebar .stageBtn {
+      display: flex;
+      align-items: center;
+      width: calc(100% - 16px);
+      text-align: left;
+      background: none;
+      border: none;
+      padding: 11px 20px;
+      font-size: 15px;
+      font-family: inherit;
+      color: var(--label-primary);
+      cursor: pointer;
+      border-radius: 10px;
+      margin: 1px 8px;
+      transition: all .2s;
+    }
+
+    #sidebar .stageBtn:hover {
+      background: rgba(0, 0, 0, .04);
+    }
+
+    #sidebar .stageBtn:active {
+      background: rgba(0, 0, 0, .08);
+      transform: scale(0.98);
+    }
+
+    #sidebar .stageBtn.active {
+      background: var(--stage-bg);
+      color: var(--label-primary);
+      font-weight: 600;
+    }
+
+    .status-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 8px;
+      flex-shrink: 0;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    /* ── Hamburger / Toggle ── */
+    #toggleSidebarBtn {
+      position: fixed;
+      left: 16px;
+      top: 16px;
+      width: 36px;
+      height: 36px;
+      background: rgba(255, 255, 255, .72);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border: 1px solid var(--separator);
+      border-radius: 10px;
+      z-index: 1100;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .2s;
+    }
+
+    #toggleSidebarBtn:hover {
+      background: rgba(255, 255, 255, .92);
+    }
+
+    .hamburger {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .hamburger-line {
+      width: 18px;
+      height: 2px;
+      background: var(--tint);
+      border-radius: 2px;
+      transition: all .3s cubic-bezier(.32, .72, 0, 1);
+      transform-origin: center;
+    }
+
+    #toggleSidebarBtn.active .hamburger-line.middle {
+      transform: scaleX(0);
+      opacity: 0;
+    }
+
+    #toggleSidebarBtn.active .hamburger-line.top {
+      transform: translateY(6px) rotate(45deg);
+    }
+
+    #toggleSidebarBtn.active .hamburger-line.bottom {
+      transform: translateY(-6px) rotate(-45deg);
+    }
+
+    /* ── Overlay when sidebar is open ── */
+    #sidebarOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .18);
+      z-index: 999;
+      transition: opacity .35s;
+    }
+
+    #sidebarOverlay.show {
+      display: block;
+    }
+
+    /* ── Main Content ── */
+    .mainContent {
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 72px 20px 40px;
+    }
+
+    /* ── Stage Title ── */
+    #stageTitle {
+      font-size: 22px;
+      font-family: 'Reggae One', sans-serif;
+      text-align: center;
+      margin-bottom: 20px;
+      letter-spacing: -.02em;
+    }
+
+    /* ── Button Group ── */
+    .buttonGroup {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .mainButtons {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .mainButton {
+      flex: 1;
+      font-size: 22px;
+      font-weight: 700;
+      font-family: inherit;
+      padding: 18px 0;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: transform .12s, box-shadow .12s;
+      color: #fff;
+      letter-spacing: -.01em;
+    }
+
+    .mainButton:first-child {
+      background: linear-gradient(135deg, #34c759, #30b350);
+      box-shadow: 0 2px 12px rgba(52, 199, 89, .35);
+    }
+
+    .mainButton:last-child {
+      background: linear-gradient(135deg, #ff6b6b, #ff3b30);
+      box-shadow: 0 2px 12px rgba(255, 59, 48, .30);
+    }
+
+    .mainButton:active {
+      transform: scale(.96);
+    }
+
+    .subButton {
+      font-size: 13px;
+      font-family: inherit;
+      font-style: normal;
+      background: none;
+      border: none;
+      color: var(--tint);
+      cursor: pointer;
+      padding: 6px 12px;
+      font-weight: 500;
+      transition: opacity .15s;
+    }
+
+    .subButton:hover {
+      opacity: .7;
+    }
+
+    /* ── Stats Card ── */
+    .panel {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+    }
+
+    .stats {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .stats tr:not(:last-child) td {
+      border-bottom: 1px solid var(--separator);
+    }
+
+    .stats td {
+      padding: 13px 18px;
+    }
+
+    .label {
+      font-size: 15px;
+      color: var(--label-secondary);
+      text-align: left;
+    }
+
+    .stat {
+      font-size: 20px;
+      font-weight: 600;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      color: var(--label-primary);
+    }
+
+    .percent::after {
+      content: "%";
+      margin-left: 1px;
+      font-size: .75em;
+      color: var(--label-secondary);
+    }
+
+    .stat-icon {
+      display: inline-block;
+      vertical-align: -3px;
+      margin-right: 6px;
+      opacity: 0.7;
+    }
+
+    /* ── Edit Modes ── */
+    .stat {
+      position: relative;
+    }
+
+    .stat-val {
+      opacity: 1;
+      transition: opacity 0.3s ease;
+    }
+    .panel.is-editing .stat-val {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .edit-input {
+      position: absolute;
+      right: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 60px;
+      padding: 4px 6px;
+      opacity: 0;
+      pointer-events: none;
+      text-align: right;
+      font-size: 16px;
+      font-family: inherit;
+      border: 1px solid var(--separator);
+      border-radius: 6px;
+      background: var(--bg);
+      color: var(--label-primary);
+      outline: none;
+      transition: opacity 0.3s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+      appearance: textfield;
+      -moz-appearance: textfield;
+    }
+    .panel.is-editing .edit-input {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .edit-input-group {
+      position: absolute;
+      right: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .panel.is-editing .edit-input-group {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .edit-input-group .edit-input {
+      position: static;
+      transform: none;
+    }
+
+    .edit-input:focus {
+      border-color: var(--tint);
+      box-shadow: 0 0 0 3px rgba(0, 122, 255, .15);
+    }
+
+    /* Allow selection inside inputs */
+    input {
+      -webkit-user-select: auto;
+      user-select: auto;
+    }
+
+    .edit-controls-wrapper {
+      display: grid;
+      grid-template-columns: 1fr;
+      margin-top: 10px;
+      align-items: start;
+    }
+
+    #btnOpenEdit {
+      grid-row: 1;
+      grid-column: 1;
+      justify-self: center;
+      margin: 0;
+      opacity: 1;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .panel.is-editing ~ .edit-controls-wrapper #btnOpenEdit {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-5px);
+    }
+
+    .editActions {
+      grid-row: 1;
+      grid-column: 1;
+      width: 100%;
+      display: flex;
+      gap: 10px;
+      margin: 0;
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      pointer-events: none;
+      transition: max-height 0.3s ease, opacity 0.3s ease;
+    }
+    .panel.is-editing ~ .edit-controls-wrapper .editActions {
+      max-height: 60px;
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .editActions .subButton {
+      flex: 1;
+      padding: 11px 0;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .editActions .subButton:first-child {
+      background: var(--tint);
+      color: #fff;
+    }
+
+    .editActions .subButton:last-child {
+      background: rgba(0, 0, 0, 0.08);
+      color: var(--label-secondary);
+    }
+
+    /* ── Flash Animations ── */
+    @keyframes flash {
+      0% {
+        background-color: var(--bg)
+      }
+
+      50% {
+        background-color: rgba(52, 199, 89, .18)
+      }
+
+      100% {
+        background-color: var(--bg)
+      }
+    }
+
+    @keyframes flashRed {
+      0% {
+        background-color: var(--bg)
+      }
+
+      50% {
+        background-color: rgba(255, 59, 48, .15)
+      }
+
+      100% {
+        background-color: var(--bg)
+      }
+    }
+
+    .flash {
+      animation: flash .25s ease
+    }
+
+    .flashRed {
+      animation: flashRed .25s ease
+    }
+
+    /* ── Dark Mode Overrides ── */
+    html.dark {
+      --bg: #1c1c1e;
+      --card: #2c2c2e;
+      --separator: rgba(255, 255, 255, .12);
+      --label-primary: rgba(255, 255, 255, .85);
+      --label-secondary: rgba(235, 235, 245, .6);
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, .24), 0 1px 2px rgba(0, 0, 0, .16);
+      --sys-red: #ff453a;
+      --sys-purple: #bf5af2;
+      --sys-green: #30d158;
+      --sys-yellow: #ffd60a;
+      --sys-blue: #0a84ff;
+      --sys-gray: #98989d;
+      --bg-red: rgba(255, 69, 58, 0.15);
+      --bg-purple: rgba(191, 90, 242, 0.15);
+      --bg-green: rgba(48, 209, 88, 0.15);
+      --bg-yellow: rgba(255, 214, 10, 0.15);
+      --bg-blue: rgba(10, 132, 255, 0.15);
+      --bg-gray: rgba(152, 152, 157, 0.15);
+    }
+
+    html.dark #sidebar {
+      background: rgba(44, 44, 46, .88);
+    }
+
+    html.dark #toggleSidebarBtn {
+      background: rgba(44, 44, 46, .72);
+    }
+
+    html.dark #toggleSidebarBtn:hover {
+      background: rgba(58, 58, 60, .92);
+    }
+
+    html.dark #sidebarOverlay {
+      background: rgba(0, 0, 0, .45);
+    }
+
+    html.dark #sidebar .stageBtn:hover {
+      background: rgba(255, 255, 255, .06);
+    }
+
+    html.dark #sidebar .stageBtn:active {
+      background: rgba(255, 255, 255, .1);
+    }
+
+    html.dark .edit-input {
+      border-color: rgba(255, 255, 255, .15);
+    }
+    
+    html.dark .editActions .subButton:last-child {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* ── Danger (destructive action) ── */
+    .danger {
+      color: var(--red) !important;
+    }
+
+    /* ── Dark Mode Toggle ── */
+    .darkModeRow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-top: 1px solid var(--separator);
+      margin-top: auto;
+    }
+
+    .darkModeLabel {
+      font-size: 15px;
+      color: var(--label-primary);
+    }
+
+    .switch-wrapper {
+      width: 52px;
+      height: 23px;
+      position: relative;
+    }
+
+    .switch {
+      --switch-width: 150px;
+      --switch-height: 65px;
+      --switch-round: 50px;
+      --switch-padding-x: 5px;
+      --switch-bg: linear-gradient(to bottom, #73bbff, #a2d1fd);
+      --switch-dark-bg: linear-gradient(to top, #2b3347, #181d27);
+      --border-width: 2px;
+      --border-gradient: linear-gradient(to bottom, #a2d1fd, #cde7ff);
+      --border-dark-gradient: linear-gradient(to bottom, #000000, #6c7384);
+      --sunmoon-size: 55px;
+      --switch-transition: all 0.5s ease;
+
+      transform: scale(0.35);
+      transform-origin: top left;
+      position: absolute;
+      top: 0;
+      left: 0;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: var(--switch-width);
+      height: var(--switch-height);
+      border-radius: var(--switch-round);
+      cursor: pointer;
+      transition: var(--switch-transition);
+      background: var(--switch-bg);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .switch::before {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: var(--switch-round);
+      opacity: 0;
+      background: var(--switch-dark-bg);
+      transition: var(--switch-transition);
+    }
+
+    html.dark .switch::before {
+      opacity: 1;
+    }
+
+    .switch .border {
+      position: absolute;
+      top: calc(var(--border-width) * -1);
+      left: calc(var(--border-width) * -1);
+      width: calc(100% + var(--border-width) * 2);
+      height: calc(100% + var(--border-width) * 2);
+      border-radius: var(--switch-round);
+      background: var(--border-gradient);
+      z-index: -1;
+      transition: var(--switch-transition);
+    }
+
+    .switch .border::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: var(--switch-round);
+      background: var(--border-dark-gradient);
+      opacity: 0;
+      transition: var(--switch-transition);
+    }
+
+    html.dark .switch .border::after {
+      opacity: 1;
+    }
+
+    .switch input {
+      display: none;
+    }
+
+    .sunmoon {
+      position: absolute;
+      width: var(--sunmoon-size);
+      height: var(--sunmoon-size);
+      border-radius: 50%;
+      transition: var(--switch-transition);
+      left: var(--switch-padding-x);
+      z-index: 1;
+      background-color: #FFC187;
+      box-shadow: 0px 0px 11.7px 0px #FFC187, 0px 0px 20px 0px #ffc18768, -2px -2px 5px 0px #ffab5c inset;
+    }
+
+    html.dark .sunmoon {
+      left: calc(100% - var(--sunmoon-size) - var(--switch-padding-x));
+      background-color: #dee5f3;
+      box-shadow: 0px 0px 51.7px 0px #dee5f3;
+    }
+
+    .darkside {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 75%;
+      height: 75%;
+      border-radius: 50%;
+      background-color: #FFC187;
+      transition: var(--switch-transition);
+    }
+
+    html.dark .darkside {
+      background-color: #565c6b;
+    }
+
+    .clouds {
+      border-radius: var(--switch-round);
+      position: relative;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .cloud {
+      position: absolute;
+      width: 60%;
+      transition: var(--switch-transition);
+    }
+
+    .cloud-1 {
+      bottom: -55%;
+      left: 0;
+    }
+
+    .cloud-2 {
+      bottom: -45%;
+      left: 25px;
+    }
+
+    .cloud-3 {
+      bottom: -40%;
+      right: 0px;
+    }
+
+    .cloud-4 {
+      bottom: -16%;
+      right: -25px;
+    }
+
+    html.dark .cloud-1 {
+      bottom: -35%;
+      left: -110px;
+    }
+
+    html.dark .cloud-2 {
+      bottom: -15%;
+      left: -110px;
+      transition: all 0.7s ease;
+    }
+
+    html.dark .cloud-3 {
+      bottom: -15%;
+      right: -110px;
+    }
+
+    html.dark .cloud-4 {
+      bottom: -5%;
+      right: -110px;
+      transition: all 0.7s ease;
+    }
+
+    .stars {
+      position: absolute;
+      top: 150%;
+      left: 0;
+      transform: translateY(-50%);
+      pointer-events: none;
+      transition: var(--switch-transition);
+    }
+
+    html.dark .stars {
+      top: 50%;
+    }
+
+    /* ── Theme Transition ── */
+    html,
+    .panel,
+    #toggleSidebarBtn,
+    .editGrid input {
+      transition: background-color .3s, color .3s, border-color .3s, box-shadow .3s;
+    }
