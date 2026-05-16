@@ -5,572 +5,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-  <title>EX MAS-turtle</title>
+  <title>マスタートル</title>
 
   <meta name="description" content="EXの出現回数を数えるかめね">
   <meta property="og:type" content="website">
 
-  <style>
-    /* ── Reset & Base ── */
-    *,
-    *::before,
-    *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      touch-action: manipulation;
-      /* Disables double-tap to zoom */
-      -webkit-user-select: none;
-      /* Prevents text selection on rapid tapping */
-      user-select: none;
-    }
+  <link rel="icon" type="image/png" href="./images/favicon.png">
+  <link rel="apple-touch-icon" href="./images/icon-180.png">
 
-    :root {
-      --bg: #f2f2f7;
-      --card: #fff;
-      --separator: rgba(60, 60, 67, .12);
-      --label-primary: rgba(0, 0, 0, .85);
-      --label-secondary: rgba(60, 60, 67, .6);
-      --tint: #007aff;
-      --green: #34c759;
-      --red: #ff3b30;
-      /* -- Apple Colors -- */
-      --sys-red: #ff3b30;
-      --sys-purple: #af52de;
-      --sys-green: #34c759;
-      --sys-yellow: #ffcc00;
-      --sys-blue: #007aff;
-      --sys-gray: #8e8e93;
-      --bg-red: rgba(255, 59, 48, 0.08);
-      --bg-purple: rgba(175, 82, 222, 0.08);
-      --bg-green: rgba(52, 199, 89, 0.08);
-      --bg-yellow: rgba(255, 204, 0, 0.12);
-      --bg-blue: rgba(0, 122, 255, 0.08);
-      --bg-gray: rgba(142, 142, 147, 0.08);
-      --radius: 14px;
-      --card-shadow: 0 1px 3px rgba(0, 0, 0, .08), 0 1px 2px rgba(0, 0, 0, .04);
-    }
-
-    html {
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
-      -webkit-font-smoothing: antialiased;
-      background: var(--bg);
-      color: var(--label-primary);
-    }
-
-    body {
-      min-height: 100dvh;
-      padding: 0;
-      margin: 0;
-    }
-
-    /* ── Sidebar ── */
-    #sidebar {
-      position: fixed;
-      left: 0;
-      top: 0;
-      width: 280px;
-      height: 100%;
-      background: rgba(255, 255, 255, .82);
-      backdrop-filter: saturate(180%) blur(20px);
-      -webkit-backdrop-filter: saturate(180%) blur(20px);
-      z-index: 1000;
-      padding: 68px 0 32px;
-      transform: translateX(-280px);
-      transition: transform .35s cubic-bezier(.32, .72, 0, 1), background-color .3s, border-color .3s;
-      overflow-y: auto;
-      border-right: 1px solid var(--separator);
-    }
-
-    #sidebar.open {
-      transform: translateX(0);
-    }
-
-    .sidebarGroup {
-      margin-bottom: 6px;
-    }
-
-    .sidebarGroupTitle {
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: .04em;
-      text-transform: uppercase;
-      color: var(--label-secondary);
-      padding: 20px 20px 6px;
-      cursor: default;
-    }
-
-    /* make collapsible title clickable */
-    .sidebarGroupTitle[onclick] {
-      cursor: pointer;
-    }
-
-    .sidebarGroupContent {
-      max-height: 500px;
-      transition: max-height .35s cubic-bezier(.32, .72, 0, 1), opacity .3s;
-      overflow: hidden;
-      opacity: 1;
-    }
-
-    .sidebarGroupContent.collapsed {
-      max-height: 0;
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    #sidebar .stageBtn {
-      display: flex;
-      align-items: center;
-      width: calc(100% - 16px);
-      text-align: left;
-      background: none;
-      border: none;
-      padding: 11px 20px;
-      font-size: 15px;
-      font-family: inherit;
-      color: var(--label-primary);
-      cursor: pointer;
-      border-radius: 10px;
-      margin: 1px 8px;
-      transition: all .2s;
-    }
-
-    #sidebar .stageBtn:hover {
-      background: rgba(0, 0, 0, .04);
-    }
-
-    #sidebar .stageBtn:active {
-      background: rgba(0, 0, 0, .08);
-      transform: scale(0.98);
-    }
-
-    #sidebar .stageBtn.active {
-      background: var(--stage-bg);
-      color: var(--label-primary);
-      font-weight: 600;
-    }
-
-    .status-dot {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      margin-right: 8px;
-      flex-shrink: 0;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    }
-
-    /* ── Hamburger / Toggle ── */
-    #toggleSidebarBtn {
-      position: fixed;
-      left: 16px;
-      top: 16px;
-      width: 36px;
-      height: 36px;
-      background: rgba(255, 255, 255, .72);
-      backdrop-filter: saturate(180%) blur(20px);
-      -webkit-backdrop-filter: saturate(180%) blur(20px);
-      border: 1px solid var(--separator);
-      border-radius: 10px;
-      z-index: 1100;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background .2s;
-    }
-
-    #toggleSidebarBtn:hover {
-      background: rgba(255, 255, 255, .92);
-    }
-
-    .hamburger {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .hamburger-line {
-      width: 18px;
-      height: 2px;
-      background: var(--tint);
-      border-radius: 2px;
-      transition: all .3s cubic-bezier(.32, .72, 0, 1);
-      transform-origin: center;
-    }
-
-    #toggleSidebarBtn.active .hamburger-line.middle {
-      transform: scaleX(0);
-      opacity: 0;
-    }
-
-    #toggleSidebarBtn.active .hamburger-line.top {
-      transform: translateY(6px) rotate(45deg);
-    }
-
-    #toggleSidebarBtn.active .hamburger-line.bottom {
-      transform: translateY(-6px) rotate(-45deg);
-    }
-
-    /* ── Overlay when sidebar is open ── */
-    #sidebarOverlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, .18);
-      z-index: 999;
-      transition: opacity .35s;
-    }
-
-    #sidebarOverlay.show {
-      display: block;
-    }
-
-    /* ── Main Content ── */
-    .mainContent {
-      max-width: 420px;
-      margin: 0 auto;
-      padding: 72px 20px 40px;
-    }
-
-    /* ── Stage Title ── */
-    #stageTitle {
-      font-size: 22px;
-      font-weight: 700;
-      text-align: center;
-      margin-bottom: 20px;
-      letter-spacing: -.02em;
-    }
-
-    /* ── Button Group ── */
-    .buttonGroup {
-      margin-bottom: 20px;
-      text-align: center;
-    }
-
-    .mainButtons {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 10px;
-    }
-
-    .mainButton {
-      flex: 1;
-      font-size: 22px;
-      font-weight: 700;
-      font-family: inherit;
-      padding: 18px 0;
-      border: none;
-      border-radius: var(--radius);
-      cursor: pointer;
-      transition: transform .12s, box-shadow .12s;
-      color: #fff;
-      letter-spacing: -.01em;
-    }
-
-    .mainButton:first-child {
-      background: linear-gradient(135deg, #34c759, #30b350);
-      box-shadow: 0 2px 12px rgba(52, 199, 89, .35);
-    }
-
-    .mainButton:last-child {
-      background: linear-gradient(135deg, #ff6b6b, #ff3b30);
-      box-shadow: 0 2px 12px rgba(255, 59, 48, .30);
-    }
-
-    .mainButton:active {
-      transform: scale(.96);
-    }
-
-    .subButton {
-      font-size: 13px;
-      font-family: inherit;
-      font-style: normal;
-      background: none;
-      border: none;
-      color: var(--tint);
-      cursor: pointer;
-      padding: 6px 12px;
-      font-weight: 500;
-      transition: opacity .15s;
-    }
-
-    .subButton:hover {
-      opacity: .7;
-    }
-
-    /* ── Stats Card ── */
-    .panel {
-      background: var(--card);
-      border-radius: var(--radius);
-      box-shadow: var(--card-shadow);
-      overflow: hidden;
-    }
-
-    .stats {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    .stats tr:not(:last-child) td {
-      border-bottom: 1px solid var(--separator);
-    }
-
-    .stats td {
-      padding: 13px 18px;
-    }
-
-    .label {
-      font-size: 15px;
-      color: var(--label-secondary);
-      text-align: left;
-    }
-
-    .stat {
-      font-size: 20px;
-      font-weight: 600;
-      text-align: right;
-      font-variant-numeric: tabular-nums;
-      color: var(--label-primary);
-    }
-
-    .percent::after {
-      content: "%";
-      margin-left: 1px;
-      font-size: .75em;
-      color: var(--label-secondary);
-    }
-
-    /* ── Edit Panel ── */
-    #editPanel {
-      display: none;
-      background: var(--card);
-      border-radius: var(--radius);
-      box-shadow: var(--card-shadow);
-      padding: 24px 20px 20px;
-      margin-top: 16px;
-    }
-
-    #editPanel h3 {
-      font-size: 17px;
-      font-weight: 600;
-      margin-bottom: 16px;
-      text-align: center;
-    }
-
-    .editGrid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-    }
-
-    .editGrid p {
-      font-size: 13px;
-      color: var(--label-secondary);
-      font-weight: 500;
-    }
-
-    .editGrid input {
-      display: block;
-      width: 100%;
-      margin-top: 5px;
-      padding: 10px 12px;
-      font-size: 16px;
-      font-family: inherit;
-      border: 1px solid var(--separator);
-      border-radius: 10px;
-      background: var(--bg);
-      color: var(--label-primary);
-      outline: none;
-      transition: border-color .2s, box-shadow .2s;
-      appearance: textfield;
-      -moz-appearance: textfield;
-    }
-
-    .editGrid input:focus {
-      border-color: var(--tint);
-      box-shadow: 0 0 0 3px rgba(0, 122, 255, .15);
-    }
-
-    /* Allow selection inside inputs */
-    input {
-      -webkit-user-select: auto;
-      user-select: auto;
-    }
-
-    .editActions {
-      display: flex;
-      gap: 10px;
-      margin-top: 18px;
-    }
-
-    .editActions .subButton {
-      flex: 1;
-      padding: 11px 0;
-      border-radius: 10px;
-      font-size: 15px;
-      font-weight: 600;
-    }
-
-    .editActions .subButton:first-child {
-      background: var(--tint);
-      color: #fff;
-    }
-
-    .editActions .subButton:last-child {
-      background: var(--bg);
-      color: var(--label-secondary);
-    }
-
-    /* ── Flash Animations ── */
-    @keyframes flash {
-      0% {
-        background-color: var(--bg)
-      }
-
-      50% {
-        background-color: rgba(52, 199, 89, .18)
-      }
-
-      100% {
-        background-color: var(--bg)
-      }
-    }
-
-    @keyframes flashRed {
-      0% {
-        background-color: var(--bg)
-      }
-
-      50% {
-        background-color: rgba(255, 59, 48, .15)
-      }
-
-      100% {
-        background-color: var(--bg)
-      }
-    }
-
-    .flash {
-      animation: flash .25s ease
-    }
-
-    .flashRed {
-      animation: flashRed .25s ease
-    }
-
-    /* ── Dark Mode Overrides ── */
-    html.dark {
-      --bg: #1c1c1e;
-      --card: #2c2c2e;
-      --separator: rgba(255, 255, 255, .12);
-      --label-primary: rgba(255, 255, 255, .85);
-      --label-secondary: rgba(235, 235, 245, .6);
-      --card-shadow: 0 1px 3px rgba(0, 0, 0, .24), 0 1px 2px rgba(0, 0, 0, .16);
-      --sys-red: #ff453a;
-      --sys-purple: #bf5af2;
-      --sys-green: #30d158;
-      --sys-yellow: #ffd60a;
-      --sys-blue: #0a84ff;
-      --sys-gray: #98989d;
-      --bg-red: rgba(255, 69, 58, 0.15);
-      --bg-purple: rgba(191, 90, 242, 0.15);
-      --bg-green: rgba(48, 209, 88, 0.15);
-      --bg-yellow: rgba(255, 214, 10, 0.15);
-      --bg-blue: rgba(10, 132, 255, 0.15);
-      --bg-gray: rgba(152, 152, 157, 0.15);
-    }
-
-    html.dark #sidebar {
-      background: rgba(44, 44, 46, .88);
-    }
-
-    html.dark #toggleSidebarBtn {
-      background: rgba(44, 44, 46, .72);
-    }
-
-    html.dark #toggleSidebarBtn:hover {
-      background: rgba(58, 58, 60, .92);
-    }
-
-    html.dark #sidebarOverlay {
-      background: rgba(0, 0, 0, .45);
-    }
-
-    html.dark #sidebar .stageBtn:hover {
-      background: rgba(255, 255, 255, .06);
-    }
-
-    html.dark #sidebar .stageBtn:active {
-      background: rgba(255, 255, 255, .1);
-    }
-
-    html.dark .editGrid input {
-      border-color: rgba(255, 255, 255, .15);
-    }
-
-    /* ── Danger (destructive action) ── */
-    .danger {
-      color: var(--red) !important;
-    }
-
-    /* ── Dark Mode Toggle ── */
-    .darkModeRow {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 20px;
-      border-top: 1px solid var(--separator);
-      margin-top: auto;
-    }
-
-    .darkModeLabel {
-      font-size: 15px;
-      color: var(--label-primary);
-    }
-
-    .toggle {
-      position: relative;
-      width: 51px;
-      height: 31px;
-      background: rgba(120, 120, 128, .32);
-      border-radius: 16px;
-      border: none;
-      cursor: pointer;
-      transition: background .3s;
-      padding: 0;
-      flex-shrink: 0;
-    }
-
-    .toggle.on {
-      background: var(--green);
-    }
-
-    .toggle::after {
-      content: '';
-      position: absolute;
-      top: 2px;
-      left: 2px;
-      width: 27px;
-      height: 27px;
-      background: #fff;
-      border-radius: 50%;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, .2);
-      transition: transform .3s cubic-bezier(.32, .72, 0, 1);
-    }
-
-    .toggle.on::after {
-      transform: translateX(20px);
-    }
-
-    /* ── Theme Transition ── */
-    html,
-    .panel,
-    #toggleSidebarBtn,
-    .editGrid input {
-      transition: background-color .3s, color .3s, border-color .3s, box-shadow .3s;
-    }
-  </style>
+  <link rel="stylesheet" href="./style.css">
 
   <script>
     // Prevent flash of wrong theme on load
@@ -618,330 +61,260 @@
     </div>
     <div class="darkModeRow">
       <span class="darkModeLabel">ダークモード</span>
-      <button class="toggle" id="darkToggle" onclick="toggleDarkMode()"></button>
+      <div class="switch-wrapper">
+        <label class="switch" for="switch">
+          <input type="checkbox" id="switch" onchange="toggleDarkMode()" />
+          <div class="sunmoon">
+            <div class="darkside"></div>
+          </div>
+          <div class="border"></div>
+          <div class="clouds">
+            <svg class="cloud cloud-1" width="88" height="50" viewBox="0 0 88 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <g opacity="0.95">
+              <circle cx="15.0573" cy="26.1517" r="13.65" transform="rotate(-3.84411 15.0573 26.1517)" fill="white"/>
+              <circle cx="33.9905" cy="17.0619" r="13.65" transform="rotate(-3.84411 33.9905 17.0619)" fill="white"/>
+              <circle cx="35.0364" cy="32.6268" r="13.65" transform="rotate(-3.84411 35.0364 32.6268)" fill="white"/>
+              <circle cx="51.1139" cy="19.8201" r="13.65" transform="rotate(-3.84411 51.1139 19.8201)" fill="white"/>
+              <circle cx="58.4709" cy="32.3551" r="13.65" transform="rotate(-3.84411 58.4709 32.3551)" fill="white"/>
+              <circle cx="72.1287" cy="22.3169" r="13.65" transform="rotate(-3.84411 72.1287 22.3169)" fill="white"/>
+              </g>
+            </svg>
+            <svg class="cloud cloud-2" width="88" height="51" viewBox="0 0 88 51" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <g opacity="0.6">
+              <circle cx="15.3241" cy="27.0558" r="13.65" transform="rotate(-4.59401 15.3241 27.0558)" fill="white"/>
+              <circle cx="34.1368" cy="17.719" r="13.65" transform="rotate(-4.59401 34.1368 17.719)" fill="white"/>
+              <circle cx="35.3863" cy="33.2689" r="13.65" transform="rotate(-4.59401 35.3863 33.2689)" fill="white"/>
+              <circle cx="51.2948" cy="20.2529" r="13.65" transform="rotate(-4.59401 51.2948 20.2529)" fill="white"/>
+              <circle cx="58.8152" cy="32.6905" r="13.65" transform="rotate(-4.59401 58.8152 32.6905)" fill="white"/>
+              <circle cx="72.3404" cy="22.4744" r="13.65" transform="rotate(-4.59401 72.3404 22.4744)" fill="white"/>
+              </g>
+            </svg>
+            <svg class="cloud cloud-3" width="88" height="50" viewBox="0 0 88 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <g opacity="0.95">
+              <circle cx="15.0574" cy="26.1517" r="13.65" transform="rotate(-3.84411 15.0574 26.1517)" fill="white"/>
+              <circle cx="33.9905" cy="17.0619" r="13.65" transform="rotate(-3.84411 33.9905 17.0619)" fill="white"/>
+              <circle cx="35.0364" cy="32.6268" r="13.65" transform="rotate(-3.84411 35.0364 32.6268)" fill="white"/>
+              <circle cx="51.114" cy="19.8201" r="13.65" transform="rotate(-3.84411 51.114 19.8201)" fill="white"/>
+              <circle cx="58.4709" cy="32.3551" r="13.65" transform="rotate(-3.84411 58.4709 32.3551)" fill="white"/>
+              <circle cx="72.1287" cy="22.3169" r="13.65" transform="rotate(-3.84411 72.1287 22.3169)" fill="white"/>
+              </g>
+            </svg>
+            <svg class="cloud cloud-4" width="88" height="50" viewBox="0 0 88 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <g opacity="0.6">
+              <circle cx="15.0574" cy="26.1517" r="13.65" transform="rotate(-3.84411 15.0574 26.1517)" fill="white"/>
+              <circle cx="33.9906" cy="17.0619" r="13.65" transform="rotate(-3.84411 33.9906 17.0619)" fill="white"/>
+              <circle cx="35.0364" cy="32.6268" r="13.65" transform="rotate(-3.84411 35.0364 32.6268)" fill="white"/>
+              <circle cx="51.1141" cy="19.8201" r="13.65" transform="rotate(-3.84411 51.1141 19.8201)" fill="white"/>
+              <circle cx="58.471" cy="32.3551" r="13.65" transform="rotate(-3.84411 58.471 32.3551)" fill="white"/>
+              <circle cx="72.1287" cy="22.3169" r="13.65" transform="rotate(-3.84411 72.1287 22.3169)" fill="white"/>
+              </g>
+            </svg>
+            <svg class="stars" width="80" height="52" viewBox="0 0 80 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12.35 13L12.8767 14.4233L14.3 14.95L12.8767 15.4767L12.35 16.9L11.8233 15.4767L10.4 14.95L11.8233 14.4233L12.35 13Z" fill="#DEE5F3"/>
+              <path d="M35.75 23.4L36.2767 24.8233L37.7 25.35L36.2767 25.8767L35.75 27.3L35.2233 25.8767L33.8 25.35L35.2233 24.8233L35.75 23.4Z" fill="#DEE5F3"/>
+              <path d="M17.55 46.8L18.0767 48.2233L19.5 48.75L18.0767 49.2767L17.55 50.7L17.0233 49.2767L15.6 48.75L17.0233 48.2233L17.55 46.8Z" fill="#DEE5F3"/>
+              <path d="M24.05 27.3L24.2256 27.7744L24.7 27.95L24.2256 28.1256L24.05 28.6L23.8745 28.1256L23.4 27.95L23.8745 27.7744L24.05 27.3Z" fill="#DEE5F3"/>
+              <path d="M13.65 36.4L13.8256 36.8744L14.3 37.05L13.8256 37.2256L13.65 37.7L13.4744 37.2256L13 37.05L13.4744 36.8744L13.65 36.4Z" fill="#DEE5F3"/>
+              <path d="M28.275 49.4L28.5383 50.1117L29.25 50.375L28.5383 50.6383L28.275 51.35L28.0116 50.6383L27.3 50.375L28.0116 50.1117L28.275 49.4Z" fill="#DEE5F3"/>
+              <g filter="url(#filter0_f_1_126)">
+              <path d="M11.375 23.4L11.6384 24.1117L12.35 24.375L11.6384 24.6383L11.375 25.35L11.1117 24.6383L10.4 24.375L11.1117 24.1117L11.375 23.4Z" fill="#DEE5F3"/>
+              </g>
+              <path d="M5.85001 42.9L6.02557 43.3744L6.50001 43.55L6.02557 43.7256L5.85001 44.2L5.67445 43.7256L5.20001 43.55L5.67445 43.3744L5.85001 42.9Z" fill="#DEE5F3"/>
+              <path d="M38.35 40.3L38.5256 40.7744L39 40.95L38.5256 41.1256L38.35 41.6L38.1745 41.1256L37.7 40.95L38.1745 40.7744L38.35 40.3Z" fill="#DEE5F3"/>
+              <path d="M26.65 6.5L26.8256 6.97444L27.3 7.15L26.8256 7.32556L26.65 7.8L26.4744 7.32556L26 7.15L26.4744 6.97444L26.65 6.5Z" fill="#DEE5F3"/>
+              <path d="M0.65 27.3L0.825559 27.7744L1.3 27.95L0.825559 28.1256L0.65 28.6L0.474441 28.1256L0 27.95L0.474441 27.7744L0.65 27.3Z" fill="#DEE5F3"/>
+              <path d="M46.15 0L46.6767 1.42332L48.1 1.95L46.6767 2.47668L46.15 3.9L45.6233 2.47668L44.2 1.95L45.6233 1.42332L46.15 0Z" fill="#DEE5F3"/>
+              <path d="M76.05 13L76.5767 14.4233L78 14.95L76.5767 15.4767L76.05 16.9L75.5233 15.4767L74.1 14.95L75.5233 14.4233L76.05 13Z" fill="#DEE5F3"/>
+              <path d="M57.85 42.9L58.3767 44.3233L59.8 44.85L58.3767 45.3767L57.85 46.8L57.3233 45.3767L55.9 44.85L57.3233 44.3233L57.85 42.9Z" fill="#DEE5F3"/>
+              <path d="M64.35 16.9L64.5256 17.3744L65 17.55L64.5256 17.7256L64.35 18.2L64.1745 17.7256L63.7 17.55L64.1745 17.3744L64.35 16.9Z" fill="#DEE5F3"/>
+              <path d="M59.15 31.2L59.3256 31.6744L59.8 31.85L59.3256 32.0256L59.15 32.5L58.9744 32.0256L58.5 31.85L58.9744 31.6744L59.15 31.2Z" fill="#DEE5F3"/>
+              <path d="M65.975 24.7L66.2383 25.4117L66.95 25.675L66.2383 25.9383L65.975 26.65L65.7117 25.9383L65 25.675L65.7117 25.4117L65.975 24.7Z" fill="#DEE5F3"/>
+              <g filter="url(#filter1_f_1_126)">
+              <path d="M51.675 13L51.9384 13.7117L52.65 13.975L51.9384 14.2383L51.675 14.95L51.4117 14.2383L50.7 13.975L51.4117 13.7117L51.675 13Z" fill="#DEE5F3"/>
+              </g>
+              <g filter="url(#filter2_f_1_126)">
+              <path d="M46.15 31.2L46.3256 31.6744L46.8 31.85L46.3256 32.0256L46.15 32.5L45.9744 32.0256L45.5 31.85L45.9744 31.6744L46.15 31.2Z" fill="#DEE5F3"/>
+              </g>
+              <path d="M78.65 29.9L78.8256 30.3744L79.3 30.55L78.8256 30.7256L78.65 31.2L78.4744 30.7256L78 30.55L78.4744 30.3744L78.65 29.9Z" fill="#DEE5F3"/>
+              <path d="M72.15 3.89999L72.3256 4.37443L72.8 4.54999L72.3256 4.72555L72.15 5.19999L71.9744 4.72555L71.5 4.54999L71.9744 4.37443L72.15 3.89999Z" fill="#DEE5F3"/>
+              <path d="M40.95 16.9L41.1255 17.3744L41.6 17.55L41.1255 17.7256L40.95 18.2L40.7744 17.7256L40.3 17.55L40.7744 17.3744L40.95 16.9Z" fill="#DEE5F3"/>
+              <defs>
+              <filter id="filter0_f_1_126" x="10.14" y="23.14" width="2.47001" height="2.47" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+              <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+              <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+              <feGaussianBlur stdDeviation="0.13" result="effect1_foregroundBlur_1_126"/>
+              </filter>
+              <filter id="filter1_f_1_126" x="50.44" y="12.74" width="2.47001" height="2.47" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+              <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+              <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+              <feGaussianBlur stdDeviation="0.13" result="effect1_foregroundBlur_1_126"/>
+              </filter>
+              <filter id="filter2_f_1_126" x="45.24" y="30.94" width="1.81999" height="1.82" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+              <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+              <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+              <feGaussianBlur stdDeviation="0.13" result="effect1_foregroundBlur_1_126"/>
+              </filter>
+              </defs>
+            </svg>
+          </div>
+        </label>
+      </div>
     </div>
     <button class="stageBtn danger"
-      onclick="if(confirm('全てのデータをリセットするかめか？')){localStorage.removeItem('stageTrackerAll'); localStorage.removeItem('stageIndex'); location.reload();}">初期化</button>
+      onclick="if(confirm('消しちゃうんですか...？｡°（´ฅωฅ`）°｡')){localStorage.removeItem('stageTrackerAll'); localStorage.removeItem('stageIndex'); location.reload();}">初期化</button>
   </div>
 
   <div class="mainContent" id="mainContent">
 
-    <h2 id="stageTitle">&#x1f422;EX MAS-turtle&#x1f54a;</h2>
+    <h2 id="stageTitle"></h2>
 
     <div class="buttonGroup">
       <div class="mainButtons">
-        <button class="mainButton" onclick="normal()">+1&#x1f422;</button>
-        <button class="mainButton" onclick="extra()">EX&#x1f54a;</button>
+        <button class="mainButton" onclick="normal()">+1</button>
+        <button class="mainButton" onclick="extra()">EX</button>
       </div>
-      <button class="subButton" onclick="openEdit()">EDit&#x270f;</button>
     </div>
 
-    <div class="panel">
+    <div class="panel" id="statsPanel">
       <table class="stats">
         <tr>
-          <td class="label">現在周回&#x1f422;</td>
-          <td class="stat" id="current"></td>
+          <td class="label"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="stat-icon">
+              <path
+                d="m12 10 2 4v3a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-3a8 8 0 1 0-16 0v3a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-3l2-4h4Z" />
+              <path d="M4.82 7.9 8 10" />
+              <path d="M15.18 7.9 12 10" />
+              <path d="M16.93 10H20a2 2 0 0 1 0 4H2" />
+            </svg>現在周回</td>
+          <td class="stat"><span id="current" class="stat-val"></span><input id="editCurrent" type="text" inputmode="numeric" pattern="[0-9]*" class="edit-input"></td>
         </tr>
         <tr>
-          <td class="label">総周回&#x1f422;</td>
-          <td class="stat" id="normalTotal"></td>
+          <td class="label"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="stat-icon">
+              <path
+                d="m12 10 2 4v3a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-3a8 8 0 1 0-16 0v3a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-3l2-4h4Z" />
+              <path d="M4.82 7.9 8 10" />
+              <path d="M15.18 7.9 12 10" />
+              <path d="M16.93 10H20a2 2 0 0 1 0 4H2" />
+            </svg>総周回</td>
+          <td class="stat"><span id="normalTotal" class="stat-val"></span><input id="editNormal" type="text" inputmode="numeric" pattern="[0-9]*" class="edit-input"></td>
         </tr>
         <tr>
-          <td class="label">EX出現&#x1f54a;</td>
-          <td class="stat" id="extraTotal"></td>
+          <td class="label"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="stat-icon">
+              <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5" />
+              <line x1="13" x2="19" y1="19" y2="13" />
+              <line x1="16" x2="20" y1="16" y2="20" />
+              <line x1="19" x2="21" y1="21" y2="19" />
+            </svg>EX出現 / 敗北</td>
+          <td class="stat">
+            <span id="exAppearDefeats" class="stat-val"></span>
+            <span class="edit-input-group">
+              <input id="editExtra" type="text" inputmode="numeric" pattern="[0-9]*" class="edit-input"> / 
+              <input id="editDefeat" type="text" inputmode="numeric" pattern="[0-9]*" class="edit-input">
+            </span>
+          </td>
         </tr>
         <tr>
-          <td class="label">ラック&#x1f340;</td>
-          <td class="stat" id="rewardTotal"></td>
+          <td class="label"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="stat-icon">
+              <path d="M12 10.5a3.5 3.5 0 1 0-3.5-3.5 3.5 3.5 0 0 0 3.5 3.5z" />
+              <path d="M13.5 12a3.5 3.5 0 1 0 3.5-3.5 3.5 3.5 0 0 0-3.5 3.5z" />
+              <path d="M12 13.5a3.5 3.5 0 1 0 3.5 3.5 3.5 3.5 0 0 0-3.5-3.5z" />
+              <path d="M10.5 12a3.5 3.5 0 1 0-3.5 3.5 3.5 3.5 0 0 0 3.5-3.5z" />
+            </svg>ラック</td>
+          <td class="stat"><span id="rewardTotal" class="stat-val"></span><input id="editReward" type="text" inputmode="numeric" pattern="[0-9]*" class="edit-input"></td>
+        </tr>
+        <tr id="rowShihouLakiriza" style="display:none">
+          <td class="label"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="stat-icon">
+              <rect x="3" y="10" width="18" height="10" rx="1" ry="1" />
+              <path d="M3 10c0-3.31 4.03-6 9-6s9 2.69 9 6" />
+              <path d="M10 10v4h4v-4" />
+            </svg>至宝 / ラキリザ</td>
+          <td class="stat">
+            <span id="shihouLakirizaTotal" class="stat-val"></span>
+            <span class="edit-input-group">
+              <input id="editShihou" type="text" inputmode="numeric" pattern="[0-9]*" class="edit-input"> / 
+              <input id="editLakiriza" type="text" inputmode="numeric" pattern="[0-9]*" class="edit-input">
+            </span>
+          </td>
         </tr>
         <tr>
-          <td class="label">最高ハマり&#x1f422;</td>
-          <td class="stat" id="max"></td>
+          <td class="label"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="stat-icon">
+              <path
+                d="m12 10 2 4v3a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-3a8 8 0 1 0-16 0v3a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-3l2-4h4Z" />
+              <path d="M4.82 7.9 8 10" />
+              <path d="M15.18 7.9 12 10" />
+              <path d="M16.93 10H20a2 2 0 0 1 0 4H2" />
+            </svg>最高ハマり</td>
+          <td class="stat"><span id="max" class="stat-val"></span><input id="editMax" type="text" inputmode="numeric" pattern="[0-9]*" class="edit-input"></td>
         </tr>
         <tr>
-          <td class="label">EX出現率&#x1f54a;</td>
+          <td class="label"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="stat-icon">
+              <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5" />
+              <line x1="13" x2="19" y1="19" y2="13" />
+              <line x1="16" x2="20" y1="16" y2="20" />
+              <line x1="19" x2="21" y1="21" y2="19" />
+            </svg>EX出現率</td>
           <td class="stat percent" id="rate"></td>
         </tr>
       </table>
     </div>
 
-    <div id="editPanel">
+    <div class="edit-controls-wrapper">
+      <button id="btnOpenEdit" class="subButton" onclick="openEdit()"><svg
+          xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="stat-icon" style="margin-right: 4px;">
+          <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+        </svg>編集</button>
 
-      <h3>データ編集</h3>
-
-      <div class="editGrid">
-
-        <p>
-          現在周回<br>
-          <input id="editCurrent" type="number" min="0">
-        </p>
-
-        <p>
-          総周回<br>
-          <input id="editNormal" type="number" min="0">
-        </p>
-
-        <p>
-          EX出現<br>
-          <input id="editExtra" type="number" min="0">
-        </p>
-
-        <p>
-          ラック<br>
-          <input id="editReward" type="number" min="0">
-        </p>
-
-        <p>
-          最高ハマり<br>
-          <input id="editMax" type="number" min="0">
-        </p>
-
-      </div>
-
-      <div class="editActions">
+      <div id="editActionsContainer" class="editActions">
         <button class="subButton" onclick="saveEdit()">保存</button>
         <button class="subButton" onclick="cancelEdit()">キャンセル</button>
       </div>
-
     </div>
+
+    <div style="text-align: center; margin-top: 36px; padding-bottom: 16px; font-size: 12px; font-weight: 500; color: var(--label-secondary); display: flex; align-items: center; justify-content: center; gap: 6px;">
+      © 2049 TurtleGames corp.
+      <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+           viewBox="0 0 512 512" xml:space="preserve" style="width: 16px; height: 16px; opacity: 0.6; pointer-events: none;">
+        <polygon style="fill:#84D993;" points="350.609,320 512,320 512,286.609 457.461,247.096 "/>
+        <path style="fill:#B9F291;" d="M456.348,230.957c-30.736,0-55.652,24.917-55.652,55.652H512
+          C512,255.873,487.083,230.957,456.348,230.957z"/>
+        <rect y="286.609" style="fill:#84D993;" width="87.93" height="33.391"/>
+        <rect x="81.252" y="303.861" style="fill:#F6D76F;" width="274.922" height="49.53"/>
+        <rect x="33.391" y="303.304" style="fill:#B9F291;" width="89.043" height="105.739"/>
+        <rect x="311.652" y="302.191" style="fill:#84D993;" width="89.043" height="106.852"/>
+        <polygon style="fill:#578C76;" points="149.148,211.478 217.043,320 400.696,320 400.696,286.609 "/>
+        <g>
+          <polygon style="fill:#50BF94;" points="217.043,320 217.043,234.852 33.391,286.609 33.391,320 	"/>
+          <path style="fill:#50BF94;" d="M162.504,146.922l54.539,139.687h183.652c0-56.221-25.264-106.552-65.059-140.23
+            C292.73,146.379,216.98,146.922,162.504,146.922z"/>
+        </g>
+        <g>
+          <path style="fill:#84D993;" d="M335.637,146.379c-31.99-27.088-73.381-43.422-118.594-43.422l-67.896,58.435l67.896,67.827
+            C271.519,229.218,317.938,194.715,335.637,146.379z"/>
+          <path style="fill:#84D993;" d="M217.043,286.609v-140.8c-54.476,0-80.139,0.57-118.594,0.57
+            c-39.795,33.678-65.058,84.009-65.058,140.23H217.043z"/>
+        </g>
+        <path style="fill:#B9F291;" d="M217.043,229.218V102.957c-45.213,0-86.604,16.334-118.594,43.422
+          C116.149,194.715,162.568,229.218,217.043,229.218z"/>
+      </svg> 
+    </div>
+
   </div>
 
-  <script>
-    const STAGE_COUNT = 11;
-    const STAGE_CONFIG = [
-      { name: "アーキレット", color: "var(--sys-red)", bg: "var(--bg-red)" },
-      { name: "コルティーナ", color: "var(--sys-purple)", bg: "var(--bg-purple)" },
-      { name: "アムネディア", color: "var(--sys-green)", bg: "var(--bg-green)" },
-      { name: "その他", color: "var(--sys-gray)", bg: "var(--bg-gray)" },
-      { name: "刹那", color: "var(--sys-yellow)", bg: "var(--bg-yellow)" },
-      { name: "那由多", color: "var(--sys-purple)", bg: "var(--bg-purple)" },
-      { name: "阿頼耶", color: "var(--sys-blue)", bg: "var(--bg-blue)" },
-      { name: "無量大数", color: "var(--sys-red)", bg: "var(--bg-red)" },
-      { name: "涅槃寂静", color: "var(--sys-green)", bg: "var(--bg-green)" },
-      { name: "不可思議", color: "var(--sys-yellow)", bg: "var(--bg-yellow)" },
-      { name: "インゼムニア", color: "var(--sys-yellow)", bg: "var(--bg-yellow)" }
-    ];
-    let stageIndex = Number(localStorage.getItem("stageIndex")) || 0;
-
-    let allData = JSON.parse(localStorage.getItem("stageTrackerAll")) || [
-      { normalClears: 0, extraAppearances: 0, extraRewards: 0, currentStreak: 0, maxStreak: 0 },
-      { normalClears: 0, extraAppearances: 0, extraRewards: 0, currentStreak: 0, maxStreak: 0 },
-      { normalClears: 0, extraAppearances: 0, extraRewards: 0, currentStreak: 0, maxStreak: 0 },
-      { normalClears: 0, extraAppearances: 0, extraRewards: 0, currentStreak: 0, maxStreak: 0 },
-      { normalClears: 0, extraAppearances: 0, extraRewards: 0, currentStreak: 0, maxStreak: 0 },
-      { normalClears: 0, extraAppearances: 0, extraRewards: 0, currentStreak: 0, maxStreak: 0 },
-      { normalClears: 0, extraAppearances: 0, extraRewards: 0, currentStreak: 0, maxStreak: 0 },
-      { normalClears: 0, extraAppearances: 0, extraRewards: 0, currentStreak: 0, maxStreak: 0 },
-      { normalClears: 0, extraAppearances: 0, extraRewards: 0, currentStreak: 0, maxStreak: 0 },
-      { normalClears: 0, extraAppearances: 0, extraRewards: 0, currentStreak: 0, maxStreak: 0 },
-      { normalClears: 0, extraAppearances: 0, extraRewards: 0, currentStreak: 0, maxStreak: 0 },
-    ];
-
-    while (allData.length < STAGE_COUNT) {
-      allData.push({
-        normalClears: 0,
-        extraAppearances: 0,
-        extraRewards: 0,
-        currentStreak: 0,
-        maxStreak: 0
-      });
-    }
-
-    function saveAll() {
-      localStorage.setItem("stageTrackerAll", JSON.stringify(allData));
-      localStorage.setItem("stageIndex", stageIndex);
-    }
-
-    function getData() {
-      return allData[stageIndex];
-    }
-
-    function setData(d) {
-      allData[stageIndex] = d;
-      saveAll();
-    }
-
-    function flashScreen(color = "flash") {
-      const el = document.body;
-      el.classList.remove("flash", "flashRed");
-      void el.offsetWidth; // Force reflow to restart animation
-      el.classList.add(color);
-      el.addEventListener("animationend", function cleanup() {
-        el.classList.remove(color);
-        el.removeEventListener("animationend", cleanup);
-      });
-    }
-
-    function save() {
-      setData(getData());
-      update();
-    }
-
-    function normal() {
-      let data = getData();
-      data.normalClears++;
-      data.currentStreak++;
-      if (data.currentStreak > data.maxStreak) {
-        data.maxStreak = data.currentStreak;
-      }
-      save();
-      flashScreen("flash");
-    }
-
-    function extra() {
-      let data = getData();
-
-      let reward;
-      while (true) {
-        reward = prompt("ドロップ数を入力するかめね、負けたらそのまま「OK」かめね");
-        if (reward === null) {
-          break;
-        }
-        if (reward.trim().length === 0) {
-          data.extraRewards += 0;
-          break;
-        }
-        const n = Number(reward);
-        if (!Number.isFinite(n) || n < 0) {
-          alert("0以上の数字を入力するかめね");
-          continue;
-        }
-        data.extraRewards += Math.floor(n);
-        break;
-      }
-
-      if (reward !== null) {
-        data.extraAppearances++;
-        if (data.currentStreak > data.maxStreak) {
-          data.maxStreak = data.currentStreak;
-        }
-        data.currentStreak = 0;
-        save();
-        setTimeout(() => flashScreen("flashRed"), 50);
-      }
-    }
-
-    function update() {
-      let data = getData();
-      document.getElementById("normalTotal").textContent = data.normalClears;
-      document.getElementById("extraTotal").textContent = data.extraAppearances;
-      document.getElementById("rewardTotal").textContent = data.extraRewards;
-      document.getElementById("current").textContent = data.currentStreak;
-      document.getElementById("max").textContent = data.maxStreak;
-      let rate = 0;
-      if (data.normalClears > 0) {
-        rate = (data.extraAppearances / data.normalClears * 100).toFixed(2);
-      }
-      document.getElementById("rate").textContent = rate;
-      let conf = STAGE_CONFIG[stageIndex];
-      document.getElementById("stageTitle").innerHTML = `<span class="status-dot" style="background: ${conf.color}"></span>${conf.name}`;
-      for (let i = 0; i < STAGE_COUNT; i++) {
-        let btn = document.getElementById(`stageBtn${i}`);
-        if (btn) btn.classList.toggle("active", i === stageIndex);
-      }
-    }
-
-    function openEdit() {
-      if (editPanel.style.display === "block") {
-        editPanel.style.display = "none";
-        return;
-      }
-      let data = getData();
-      editPanel.style.display = "block";
-      editNormal.value = data.normalClears;
-      editExtra.value = data.extraAppearances;
-      editReward.value = data.extraRewards;
-      editCurrent.value = data.currentStreak;
-      editMax.value = data.maxStreak;
-    }
-
-    function cancelEdit() {
-      editPanel.style.display = "none";
-    }
-
-    function validate(d) {
-      if (d.extraAppearances > d.normalClears)
-        return "EX出現が総周回を超えてるかめね";
-      if (d.currentStreak > d.normalClears)
-        return "現在周回が総周回を超えてるかめね";
-      if (d.extraRewards < 0)
-        return "ラックは0以上かめね";
-      return null;
-    }
-
-    function saveEdit() {
-      let newData = {
-        normalClears: Number(editNormal.value),
-        extraAppearances: Number(editExtra.value),
-        extraRewards: Number(editReward.value),
-        currentStreak: Number(editCurrent.value),
-        maxStreak: Number(editMax.value)
-      }
-      let error = validate(newData);
-      if (error) {
-        alert(error);
-        return;
-      }
-      setData(newData);
-      editPanel.style.display = "none";
-      update();
-    }
-
-    function toggleSidebar() {
-      const sidebar = document.getElementById("sidebar");
-      const btn = document.getElementById("toggleSidebarBtn");
-      const overlay = document.getElementById("sidebarOverlay");
-      sidebar.classList.toggle("open");
-      btn.classList.toggle("active");
-      overlay.classList.toggle("show");
-      const isOpen = sidebar.classList.contains("open");
-      document.body.style.overflow = isOpen ? "hidden" : "";
-      if (isOpen) {
-        cancelEdit();
-      }
-    }
-
-    function selectStage(idx) {
-      stageIndex = idx;
-      saveAll();
-      toggleSidebar();
-      update();
-    }
-
-    function toggleGroup(titleElem) {
-      const content = titleElem.nextElementSibling;
-      content.classList.toggle('collapsed');
-    }
-
-    function toggleDarkMode() {
-      const isDark = document.documentElement.classList.toggle('dark');
-      localStorage.setItem('darkMode', isDark);
-      document.getElementById('darkToggle').classList.toggle('on', isDark);
-    }
-
-    window.addEventListener("DOMContentLoaded", () => {
-      // Sync toggle button state with saved preference
-      const isDark = document.documentElement.classList.contains('dark');
-      document.getElementById('darkToggle').classList.toggle('on', isDark);
-
-      for (let i = 0; i < STAGE_COUNT; i++) {
-        let btn = document.getElementById(`stageBtn${i}`);
-        if (btn) {
-          let conf = STAGE_CONFIG[i];
-          btn.innerHTML = `${conf.name}`;
-          btn.style.setProperty('--stage-bg', conf.bg);
-        }
-      }
-
-      for (let i = 0; i < allData.length; i++) {
-        if (allData[i].currentStreak > allData[i].maxStreak) {
-          allData[i].maxStreak = allData[i].currentStreak;
-        }
-      }
-      saveAll();
-      update();
-    });
-  </script>
+  <script src="./script.js"></script>
 
 </body>
 
