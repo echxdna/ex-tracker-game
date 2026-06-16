@@ -1,568 +1,699 @@
-const STAGE_COUNT = 11;
-const STAGE_CONFIG = [
-  { name: "アーキレット", color: "var(--sys-red)", bg: "var(--bg-red)" },
-  { name: "コルティーナ", color: "var(--sys-purple)", bg: "var(--bg-purple)" },
-  { name: "アムネディア", color: "var(--sys-green)", bg: "var(--bg-green)" },
-  { name: "自由枠", color: "var(--sys-gray)", bg: "var(--bg-gray)" },
-  { name: "刹那", color: "var(--sys-yellow)", bg: "var(--bg-yellow)" },
-  { name: "那由多", color: "var(--sys-purple)", bg: "var(--bg-purple)" },
-  { name: "阿頼耶", color: "var(--sys-blue)", bg: "var(--bg-blue)" },
-  { name: "無量大数", color: "var(--sys-red)", bg: "var(--bg-red)" },
-  { name: "涅槃寂静", color: "var(--sys-green)", bg: "var(--bg-green)" },
-  { name: "不可思議", color: "var(--sys-yellow)", bg: "var(--bg-yellow)" },
-  { name: "インゼムニア", color: "var(--sys-yellow)", bg: "var(--bg-yellow)" }
-];
-let stageIndex = Number(localStorage.getItem("stageIndex")) || 0;
+/* ── Reset & Base ── */
+    @font-face {
+      font-family: 'Reggae One';
+      src: url('./fonts/ReggaeOne-Regular.woff2') format('woff2');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }
 
-const KINKI_STAGES = [4, 5, 6, 7, 8, 9];
-const EX_SELECTOR_STAGES = [0, 1, 2, 10];
-function makeDefault() {
-  return { normalClears: 0, extraAppearances: 0, extraRewards: 0, currentStreak: 0, maxStreak: 0, minStreak: null, exDefeats: 0, shihou: 0, lakiriza: 0, drop1: 0, drop2: 0, drop3: 0, drop4: 0, drop5: 0 };
-}
-let allData = JSON.parse(localStorage.getItem("stageTrackerAll")) || Array.from({ length: STAGE_COUNT }, makeDefault);
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      touch-action: manipulation;
+      /* Disables double-tap to zoom */
+      -webkit-user-select: none;
+      /* Prevents text selection on rapid tapping */
+      user-select: none;
+    }
 
-while (allData.length < STAGE_COUNT) allData.push(makeDefault());
-// migrate old data missing new fields
-allData.forEach(d => { if (d.exDefeats === undefined) d.exDefeats = 0; if (d.shihou === undefined) d.shihou = 0; if (d.lakiriza === undefined) d.lakiriza = 0; if (d.minStreak === undefined) d.minStreak = null; if (d.drop1 === undefined) { d.drop1 = 0; d.drop2 = 0; d.drop3 = 0; d.drop4 = 0; d.drop5 = 0; } });
+    :root {
+      --bg: #f2f2f7;
+      --card: #fff;
+      --separator: rgba(60, 60, 67, .12);
+      --label-primary: rgba(0, 0, 0, .85);
+      --label-secondary: rgba(60, 60, 67, .6);
+      --tint: #007aff;
+      --green: #34c759;
+      --red: #ff3b30;
+      /* -- Apple Colors -- */
+      --sys-red: #ff3b30;
+      --sys-purple: #af52de;
+      --sys-green: #34c759;
+      --sys-yellow: #ffcc00;
+      --sys-blue: #007aff;
+      --sys-gray: #8e8e93;
+      --bg-red: rgba(255, 59, 48, 0.08);
+      --bg-purple: rgba(175, 82, 222, 0.08);
+      --bg-green: rgba(52, 199, 89, 0.08);
+      --bg-yellow: rgba(255, 204, 0, 0.12);
+      --bg-blue: rgba(0, 122, 255, 0.08);
+      --bg-gray: rgba(142, 142, 147, 0.08);
+      --radius: 14px;
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, .08), 0 1px 2px rgba(0, 0, 0, .04);
+    }
 
-function saveAll() {
-  localStorage.setItem("stageTrackerAll", JSON.stringify(allData));
-  localStorage.setItem("stageIndex", stageIndex);
-}
+    html {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background: var(--bg);
+      color: var(--label-primary);
+    }
 
-function getData() {
-  return allData[stageIndex];
-}
+    body {
+      min-height: 100dvh;
+      padding: 0;
+      margin: 0;
+    }
 
-function setData(d) {
-  allData[stageIndex] = d;
-  saveAll();
-}
+    /* ── Sidebar ── */
+    #sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 280px;
+      height: 100%;
+      background: rgba(255, 255, 255, .82);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      z-index: 1000;
+      padding: 68px 0 32px;
+      transform: translateX(-280px);
+      transition: transform .35s cubic-bezier(.32, .72, 0, 1), background-color .3s, border-color .3s;
+      overflow-y: auto;
+      border-right: 1px solid var(--separator);
+    }
 
-function flashScreen(color = "flash") {
-  const el = document.body;
-  el.classList.remove("flash", "flashRed");
-  void el.offsetWidth; // Force reflow to restart animation
-  el.classList.add(color);
-  el.addEventListener("animationend", function cleanup() {
-    el.classList.remove(color);
-    el.removeEventListener("animationend", cleanup);
-  });
-}
+    #sidebar.open {
+      transform: translateX(0);
+    }
 
-function save() {
-  setData(getData());
-  update();
-}
+    .sidebarGroup {
+      margin-bottom: 6px;
+    }
 
-function normal() {
-  if (document.getElementById("statsPanel").classList.contains("is-editing")) {
-    alert("先に編集を完了させてください。");
-    return;
-  }
-  let data = getData();
-  data.normalClears++;
-  data.currentStreak++;
-  if (data.currentStreak > data.maxStreak) {
-    data.maxStreak = data.currentStreak;
-  }
-  save();
-  flashScreen("flash");
-}
+    .sidebarGroupTitle {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: var(--label-secondary);
+      padding: 20px 20px 6px;
+      cursor: default;
+    }
 
-function extra() {
-  if (document.getElementById("statsPanel").classList.contains("is-editing")) {
-    alert("先に編集を完了させてください。");
-    return;
-  }
-  let data = getData();
-  if (data.extraAppearances >= data.normalClears) {
-    alert("EX出現数は総周回数を超えません。");
-    return;
-  }
-  if (data.currentStreak === 0) {
-    alert("先に現在周回数を追加してください。");
-    return;
-  }
-  const isKinki = KINKI_STAGES.includes(stageIndex);
-  const useSelector = EX_SELECTOR_STAGES.includes(stageIndex);
-  const dialogFn = useSelector ? showExSelectorDialog : showExDialog;
-  dialogFn(isKinki, function (result) {
-    if (!result) return;
-    data.extraAppearances++;
-    data.extraRewards += result.reward;
-    if (result.reward === 0) data.exDefeats++;
-    if (result.baseDrop === 1) data.drop1++;
-    if (result.baseDrop === 2) data.drop2++;
-    if (result.baseDrop === 3) data.drop3++;
-    if (result.baseDrop === 4) data.drop4++;
-    if (result.baseDrop === 5) data.drop5++;
-    if (result.shihou) data.shihou++;
-    if (result.lakiriza) data.lakiriza++;
-    if (data.currentStreak > data.maxStreak) data.maxStreak = data.currentStreak;
-    if (data.minStreak === null || data.currentStreak < data.minStreak) data.minStreak = data.currentStreak;
-    data.currentStreak = 0;
-    save();
-    setTimeout(() => flashScreen("flashRed"), 50);
-  });
-}
+    /* make collapsible title clickable */
+    .sidebarGroupTitle[onclick] {
+      cursor: pointer;
+    }
 
-/* ── EX Selector Dialog (stages 0,1,2,10) ── */
-function showExSelectorDialog(showChecks, callback) {
-  let old = document.getElementById('exDialog');
-  if (old) old.remove();
+    .sidebarGroupContent {
+      max-height: 500px;
+      transition: max-height .35s cubic-bezier(.32, .72, 0, 1), opacity .3s;
+      overflow: hidden;
+      opacity: 1;
+    }
 
-  const overlay = document.createElement('div');
-  overlay.id = 'exDialog';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:2000;display:flex;align-items:center;justify-content:center;';
+    .sidebarGroupContent.collapsed {
+      max-height: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
 
-  const card = document.createElement('div');
-  card.style.cssText = 'background:var(--card);border-radius:var(--radius);padding:24px 22px 20px;width:min(340px,90vw);box-shadow:0 8px 32px rgba(0,0,0,.18);';
+    #sidebar .stageBtn {
+      display: flex;
+      align-items: center;
+      width: calc(100% - 16px);
+      text-align: left;
+      background: none;
+      border: none;
+      padding: 11px 20px;
+      font-size: 15px;
+      font-family: inherit;
+      color: var(--label-primary);
+      cursor: pointer;
+      border-radius: 10px;
+      margin: 1px 8px;
+      transition: all .2s;
+    }
 
-  card.innerHTML = `
-        <div style="font-size:17px;font-weight:600;text-align:center;margin-bottom:18px;">ドロップ数を入力</div>
-        <div id="exSelectorRow" style="display:flex;gap:6px;">
-          <button class="ex-seg" data-val="defeat" style="flex:1;padding:12px 0;border-radius:10px;font-size:14px;font-weight:600;border:2px solid var(--separator);background:var(--bg);color:var(--label-secondary);cursor:pointer;font-family:inherit;transition:all .15s;">敗北</button>
-          <button class="ex-seg" data-val="1" style="flex:1;padding:12px 0;border-radius:10px;font-size:17px;font-weight:600;border:2px solid var(--separator);background:var(--bg);color:var(--label-primary);cursor:pointer;font-family:inherit;transition:all .15s;">1</button>
-          <button class="ex-seg" data-val="2" style="flex:1;padding:12px 0;border-radius:10px;font-size:17px;font-weight:600;border:2px solid var(--separator);background:var(--bg);color:var(--label-primary);cursor:pointer;font-family:inherit;transition:all .15s;">2</button>
-          <button class="ex-seg" data-val="3" style="flex:1;padding:12px 0;border-radius:10px;font-size:17px;font-weight:600;border:2px solid var(--separator);background:var(--bg);color:var(--label-primary);cursor:pointer;font-family:inherit;transition:all .15s;">3</button>
-          <button class="ex-seg" data-val="4" style="flex:1;padding:12px 0;border-radius:10px;font-size:17px;font-weight:600;border:2px solid var(--separator);background:var(--bg);color:var(--label-primary);cursor:pointer;font-family:inherit;transition:all .15s;">4</button>
-          <button class="ex-seg" data-val="5" style="flex:1;padding:12px 0;border-radius:10px;font-size:17px;font-weight:600;border:2px solid var(--separator);background:var(--bg);color:var(--label-primary);cursor:pointer;font-family:inherit;transition:all .15s;">5</button>
-        </div>
-        <div id="exBossDropRow" style="display:flex;align-items:center;gap:8px;margin:14px 0 4px;opacity:0.4;pointer-events:none;transition:opacity .2s;">
-          <input type="checkbox" id="exChkBossDrop" style="width:20px;height:20px;accent-color:var(--tint);cursor:pointer;flex-shrink:0;">
-          <label for="exChkBossDrop" style="font-size:15px;color:var(--label-primary);cursor:pointer;">ボスドロップアップ(+3)</label>
-        </div>
-        <div style="display:flex;gap:10px;margin-top:18px;">
-          <button id="exDialogOk" style="flex:1;padding:11px 0;border-radius:10px;font-size:15px;font-weight:600;border:none;background:var(--tint);color:#fff;cursor:pointer;font-family:inherit;opacity:0.4;pointer-events:none;transition:opacity .15s;">保存</button>
-          <button id="exDialogCancel" style="flex:1;padding:11px 0;border-radius:10px;font-size:15px;font-weight:600;border:none;background:var(--bg);color:var(--label-secondary);cursor:pointer;font-family:inherit;">キャンセル</button>
-        </div>`;
+    #sidebar .stageBtn:hover {
+      background: rgba(0, 0, 0, .04);
+    }
 
-  overlay.appendChild(card);
-  document.body.appendChild(overlay);
+    #sidebar .stageBtn:active {
+      background: rgba(0, 0, 0, .08);
+      transform: scale(0.98);
+    }
 
-  // Freeze body scroll
-  const scrollY = window.scrollY;
-  document.body.style.position = 'fixed';
-  document.body.style.top = `-${scrollY}px`;
-  document.body.style.width = '100%';
-  document.body.style.overflow = 'hidden';
-  overlay.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+    #sidebar .stageBtn.active {
+      background: var(--stage-bg);
+      color: var(--label-primary);
+      font-weight: 600;
+    }
 
-  let selectedVal = null; // 'defeat' | 1 | 2 | 3 | 4 | 5
+    .status-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 8px;
+      flex-shrink: 0;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
 
-  const segs = card.querySelectorAll('.ex-seg');
-  const bossDropRow = document.getElementById('exBossDropRow');
-  const bossDropChk = document.getElementById('exChkBossDrop');
-  const okBtn = document.getElementById('exDialogOk');
+    /* ── Hamburger / Toggle ── */
+    #toggleSidebarBtn {
+      position: fixed;
+      left: 16px;
+      top: 16px;
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #34c759, #30b350);
+      box-shadow: 0 2px 12px rgba(52, 199, 89, .35);
+      border: none;
+      border-radius: 10px;
+      z-index: 1100;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform .12s, box-shadow .12s;
+    }
 
-  segs.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const clickedVal = btn.dataset.val;
-      const clickedIsDefeat = clickedVal === 'defeat';
-      // Deselect all
-      segs.forEach(b => {
-        b.style.background = 'var(--bg)';
-        b.style.borderColor = 'var(--separator)';
-        b.style.color = b.dataset.val === 'defeat' ? 'var(--label-secondary)' : 'var(--label-primary)';
-      });
-      // Select clicked — red for 敗北, tint for numbers
-      const selColor = clickedIsDefeat ? 'var(--red)' : 'var(--tint)';
-      btn.style.background = selColor;
-      btn.style.borderColor = selColor;
-      btn.style.color = '#fff';
-      selectedVal = clickedVal;
+    #toggleSidebarBtn:active {
+      transform: scale(.96);
+    }
 
-      // Boss drop availability
-      bossDropRow.style.opacity = clickedIsDefeat ? '0.4' : '1';
-      bossDropRow.style.pointerEvents = clickedIsDefeat ? 'none' : 'auto';
-      if (clickedIsDefeat) bossDropChk.checked = false;
+    .hamburger {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
 
-      // Enable OK button
-      okBtn.style.opacity = '1';
-      okBtn.style.pointerEvents = 'auto';
-    });
-  });
+    .hamburger-line {
+      width: 18px;
+      height: 2px;
+      background: #fff;
+      border-radius: 2px;
+      transition: all .3s cubic-bezier(.32, .72, 0, 1);
+      transform-origin: center;
+    }
 
-  function close(result) {
-    overlay.remove();
-    document.body.style.position = '';
-    document.body.style.top = '';
-    document.body.style.width = '';
-    document.body.style.overflow = '';
-    window.scrollTo(0, scrollY);
-    callback(result);
-  }
+    #toggleSidebarBtn.active .hamburger-line.middle {
+      transform: scaleX(0);
+      opacity: 0;
+    }
 
-  document.getElementById('exDialogCancel').onclick = () => close(null);
+    #toggleSidebarBtn.active .hamburger-line.top {
+      transform: translateY(6px) rotate(45deg);
+    }
 
-  okBtn.onclick = () => {
-    if (selectedVal === null) return;
-    const isDefeat = selectedVal === 'defeat';
-    const baseReward = isDefeat ? 0 : parseInt(selectedVal, 10);
-    const bossBonus = (!isDefeat && bossDropChk.checked) ? 3 : 0;
-    close({ reward: baseReward + bossBonus, baseDrop: baseReward, shihou: false, lakiriza: false });
-  };
-}
+    #toggleSidebarBtn.active .hamburger-line.bottom {
+      transform: translateY(-6px) rotate(-45deg);
+    }
 
-/* ── EX Dialog (free input, kinki stages) ── */
-function showExDialog(showChecks, callback) {
-  // Remove existing dialog if any
-  let old = document.getElementById('exDialog');
-  if (old) old.remove();
+    /* ── Overlay when sidebar is open ── */
+    #sidebarOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .18);
+      z-index: 999;
+      transition: opacity .35s;
+    }
 
-  const overlay = document.createElement('div');
-  overlay.id = 'exDialog';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:2000;display:flex;align-items:center;justify-content:center;';
+    #sidebarOverlay.show {
+      display: block;
+    }
 
-  const card = document.createElement('div');
-  card.style.cssText = 'background:var(--card);border-radius:var(--radius);padding:24px 22px 20px;width:min(320px,85vw);box-shadow:0 8px 32px rgba(0,0,0,.18);';
+    /* ── Main Content ── */
+    .mainContent {
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 72px 20px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
 
-  let checksHTML = '';
-  if (showChecks) {
-    checksHTML = `
-          <div id="exChecksRow" style="display:flex;gap:16px;margin:14px 0 4px;transition:opacity .2s;">
-            <label style="display:flex;align-items:center;gap:6px;font-size:15px;color:var(--label-primary);cursor:pointer;">
-              <input type="checkbox" id="exChkShihou" style="width:20px;height:20px;accent-color:var(--tint);cursor:pointer;"> 至宝
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;font-size:15px;color:var(--label-primary);cursor:pointer;">
-              <input type="checkbox" id="exChkLakiriza" style="width:20px;height:20px;accent-color:var(--tint);cursor:pointer;"> ラキリザ
-            </label>
-          </div>`;
-  }
+    /* Layout slots for swap */
+    #slotButtons { order: 1; }
+    #slotStats   { order: 2; }
 
-  card.innerHTML = `
-        <div style="font-size:17px;font-weight:600;text-align:center;margin-bottom:16px;">ドロップ数を入力</div>
-        <div style="display:flex;gap:8px;align-items:stretch;">
-          <button id="exKinkiDefeatBtn" style="padding:10px 14px;border-radius:10px;font-size:14px;font-weight:600;border:2px solid var(--separator);background:var(--bg);color:var(--label-secondary);cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap;">敗北</button>
-          <input id="exRewardInput" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" style="flex:1;min-width:0;padding:10px 12px;font-size:18px;font-family:inherit;border:1px solid var(--separator);border-radius:10px;background:var(--bg);color:var(--label-primary);outline:none;text-align:center;transition:opacity .15s;">
-        </div>
-        ${checksHTML}
-        <div style="display:flex;gap:10px;margin-top:18px;">
-          <button id="exDialogOk" style="flex:1;padding:11px 0;border-radius:10px;font-size:15px;font-weight:600;border:none;background:var(--tint);color:#fff;cursor:pointer;font-family:inherit;">保存</button>
-          <button id="exDialogCancel" style="flex:1;padding:11px 0;border-radius:10px;font-size:15px;font-weight:600;border:none;background:var(--bg);color:var(--label-secondary);cursor:pointer;font-family:inherit;">キャンセル</button>
-        </div>`;
+    .mainContent.buttons-bottom #slotButtons { order: 2; }
+    .mainContent.buttons-bottom #slotStats   { order: 1; }
 
-  overlay.appendChild(card);
-  document.body.appendChild(overlay);
+    /* Always pin these to the bottom regardless of swap state */
+    .edit-controls-wrapper { order: 10; }
+    .creditFooter          { order: 11; }
 
-  // Freeze body scroll (iOS-safe: position:fixed preserves layout, saves scroll offset)
-  const scrollY = window.scrollY;
-  document.body.style.position = 'fixed';
-  document.body.style.top = `-${scrollY}px`;
-  document.body.style.width = '100%';
-  document.body.style.overflow = 'hidden';
-  // Also block touchmove on the overlay itself (belt-and-suspenders for iOS)
-  overlay.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+    /* Slot animation readiness */
+    .layoutSlot {
+      will-change: transform;
+    }
 
-  const inp = document.getElementById('exRewardInput');
-  const defeatBtn = document.getElementById('exKinkiDefeatBtn');
-  const checksRow = showChecks ? document.getElementById('exChecksRow') : null;
-  let kinkiDefeatSelected = false;
+    /* Credit footer styles */
+    .creditFooter {
+      text-align: center;
+      padding-bottom: 16px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--label-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
 
-  function setDefeatMode(on) {
-    kinkiDefeatSelected = on;
-    if (on) {
-      defeatBtn.style.background = 'var(--red)';
-      defeatBtn.style.borderColor = 'var(--red)';
-      defeatBtn.style.color = '#fff';
-      inp.style.opacity = '0.35';
-      inp.style.pointerEvents = 'none';
-      inp.value = '';
-      if (checksRow) {
-        checksRow.style.opacity = '0.35';
-        checksRow.style.pointerEvents = 'none';
-        checksRow.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
+    /* ── Stage Title ── */
+    #stageTitle {
+      font-size: 22px;
+      font-family: 'Reggae One', sans-serif;
+      text-align: center;
+      letter-spacing: -.02em;
+    }
+
+    /* ── Button Group ── */
+    .buttonGroup {
+      text-align: center;
+    }
+
+    .mainButtons {
+      display: flex;
+      gap: 12px;
+    }
+
+    .mainButton {
+      flex: 1;
+      font-size: 22px;
+      font-weight: 700;
+      font-family: inherit;
+      padding: 18px 0;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: transform .12s, box-shadow .12s;
+      color: #fff;
+      letter-spacing: -.01em;
+    }
+
+    .mainButton:first-child {
+      background: linear-gradient(135deg, #34c759, #30b350);
+      box-shadow: 0 2px 12px rgba(52, 199, 89, .35);
+    }
+
+    .mainButton:last-child {
+      background: linear-gradient(135deg, #ff6b6b, #ff3b30);
+      box-shadow: 0 2px 12px rgba(255, 59, 48, .30);
+    }
+
+    .mainButton:active {
+      transform: scale(.96);
+    }
+
+    .subButton {
+      font-size: 13px;
+      font-family: inherit;
+      font-style: normal;
+      background: none;
+      border: none;
+      color: var(--tint);
+      cursor: pointer;
+      padding: 6px 12px;
+      font-weight: 500;
+      transition: opacity .15s;
+    }
+
+    .subButton:hover {
+      opacity: .7;
+    }
+
+    /* ── Stats Card ── */
+    .panel {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+    }
+
+    .stats, .stats tbody {
+      display: block;
+      width: 100%;
+    }
+
+    .stats tr {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+
+    .stats tr:not(:last-child) {
+      border-bottom: 1px solid var(--separator);
+    }
+
+    .stats td {
+      padding: 13px 18px;
+    }
+
+    .label {
+      font-size: 15px;
+      color: var(--label-secondary);
+      text-align: left;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .stat {
+      font-size: 20px;
+      font-weight: 600;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      color: var(--label-primary);
+      flex-grow: 1;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+    }
+
+    .percent::after {
+      content: "%";
+      margin-left: 1px;
+      font-size: .75em;
+      color: var(--label-secondary);
+    }
+
+    .stat-icon {
+      display: inline-block;
+      vertical-align: -3px;
+      margin-right: 6px;
+      opacity: 0.7;
+    }
+
+    /* ── Edit Modes ── */
+    .stat {
+      position: relative;
+    }
+
+    .stat-val {
+      opacity: 1;
+      transition: opacity 0.3s ease;
+    }
+    .panel.is-editing .stat-val {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .edit-input {
+      position: absolute;
+      right: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 60px;
+      max-width: calc(100% - 18px);
+      padding: 4px 6px;
+      opacity: 0;
+      pointer-events: none;
+      text-align: right;
+      font-size: 16px;
+      font-family: inherit;
+      border: 1px solid var(--separator);
+      border-radius: 6px;
+      background: var(--bg);
+      color: var(--label-primary);
+      outline: none;
+      transition: opacity 0.3s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+      appearance: textfield;
+      -moz-appearance: textfield;
+    }
+    .panel.is-editing .edit-input {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .edit-input-group {
+      position: absolute;
+      right: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      max-width: calc(100% - 18px);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 4px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .panel.is-editing .edit-input-group {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .edit-input-group .edit-input {
+      position: static;
+      transform: none;
+      min-width: 0;
+    }
+    
+    .edit-input-micro {
+      width: 32px !important;
+      padding: 2px !important;
+      font-size: 14px !important;
+      text-align: center;
+    }
+
+    .edit-input:focus {
+      border-color: var(--tint);
+      box-shadow: 0 0 0 3px rgba(0, 122, 255, .15);
+    }
+
+    /* Allow selection inside inputs */
+    input {
+      -webkit-user-select: auto;
+      user-select: auto;
+    }
+
+    .edit-controls-wrapper {
+      display: grid;
+      grid-template-columns: 1fr;
+      align-items: start;
+      order: 10;
+    }
+
+    #btnOpenEdit {
+      grid-row: 1;
+      grid-column: 1;
+      justify-self: center;
+      margin: 0;
+      opacity: 1;
+      color: var(--green);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    #mainContent.is-editing .edit-controls-wrapper #btnOpenEdit {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-5px);
+    }
+
+    .editActions {
+      grid-row: 1;
+      grid-column: 1;
+      width: 100%;
+      display: flex;
+      gap: 12px;
+      margin: 0;
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      pointer-events: none;
+      transition: max-height 0.3s ease, opacity 0.3s ease;
+    }
+    #mainContent.is-editing .edit-controls-wrapper .editActions {
+      max-height: 60px;
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .editActions .subButton {
+      flex: 1;
+      padding: 11px 0;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .editActions .subButton:first-child {
+      background: var(--tint);
+      color: #fff;
+    }
+
+    .editActions .subButton:last-child {
+      background: rgba(0, 0, 0, 0.08);
+      color: var(--label-secondary);
+    }
+
+    /* ── Flash Animations ── */
+    @keyframes flash {
+      0% {
+        background-color: var(--bg)
       }
-    } else {
-      defeatBtn.style.background = 'var(--bg)';
-      defeatBtn.style.borderColor = 'var(--separator)';
-      defeatBtn.style.color = 'var(--label-secondary)';
-      inp.style.opacity = '';
-      inp.style.pointerEvents = '';
-      if (checksRow) {
-        checksRow.style.opacity = '';
-        checksRow.style.pointerEvents = '';
+
+      50% {
+        background-color: rgba(52, 199, 89, .18)
       }
-      inp.focus();
+
+      100% {
+        background-color: var(--bg)
+      }
     }
-  }
 
-  defeatBtn.addEventListener('click', () => setDefeatMode(!kinkiDefeatSelected));
+    @keyframes flashRed {
+      0% {
+        background-color: var(--bg)
+      }
 
-  inp.value = '';
-  inp.addEventListener('keydown', e => {
-    const nav = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'Tab'];
-    if (nav.includes(e.key)) return;
-    if (!/^\d$/.test(e.key)) e.preventDefault();
-  });
-  // Typing in input deactivates defeat mode
-  inp.addEventListener('input', () => {
-    if (kinkiDefeatSelected) setDefeatMode(false);
-  });
-  inp.focus();
+      50% {
+        background-color: rgba(255, 59, 48, .15)
+      }
 
-  // Prevent checkboxes from stealing focus (keyboard collapse on mobile)
-  if (showChecks) {
-    card.querySelectorAll('label').forEach(label => {
-      label.addEventListener('mousedown', e => e.preventDefault());
-      label.addEventListener('touchend', e => {
-        e.preventDefault();
-        if (kinkiDefeatSelected) return;
-        const chk = label.querySelector('input[type="checkbox"]');
-        if (chk) chk.checked = !chk.checked;
-        inp.focus();
-      });
-    });
-  }
-
-  function close(result) {
-    overlay.remove();
-    // Restore body scroll state
-    document.body.style.position = '';
-    document.body.style.top = '';
-    document.body.style.width = '';
-    document.body.style.overflow = '';
-    window.scrollTo(0, scrollY);
-    callback(result);
-  }
-
-  document.getElementById('exDialogCancel').onclick = () => close(null);
-
-  document.getElementById('exDialogOk').onclick = () => {
-    if (kinkiDefeatSelected) {
-      close({ reward: 0, shihou: false, lakiriza: false });
-      return;
+      100% {
+        background-color: var(--bg)
+      }
     }
-    const n = parseInt(inp.value, 10);
-    if (!Number.isFinite(n) || n < 0) { alert('ドロップ数を入力してください。'); return; }
-    const shihou = showChecks && document.getElementById('exChkShihou').checked;
-    const lakiriza = showChecks && document.getElementById('exChkLakiriza').checked;
-    if ((shihou || lakiriza) && n < 2) { alert('至宝/ラキリザ発動時、ドロップ数は2以上です。'); return; }
-    close({ reward: n, shihou, lakiriza });
-  };
-}
 
-function update() {
-  let data = getData();
-  const isKinki = KINKI_STAGES.includes(stageIndex);
-  document.getElementById("normalTotal").textContent = data.normalClears;
-  document.getElementById("exAppearDefeats").textContent = `${data.extraAppearances} / ${data.exDefeats}`;
-  document.getElementById("rewardTotal").textContent = data.extraRewards;
-  document.getElementById("dropTotal").textContent = `${data.drop1} / ${data.drop2} / ${data.drop3} / ${data.drop4} / ${data.drop5}`;
-  document.getElementById("shihouLakirizaTotal").textContent = `${data.shihou} / ${data.lakiriza}`;
-  document.getElementById("current").textContent = data.currentStreak;
-  document.getElementById("minMaxStreak").textContent =
-    `${data.minStreak !== null ? data.minStreak : '—'} / ${data.maxStreak}`;
-  // show/hide kinki-only row and drop row
-  document.getElementById("rowShihouLakiriza").style.display = isKinki ? '' : 'none';
-  const useSelector = EX_SELECTOR_STAGES.includes(stageIndex);
-  document.getElementById("rowDrops").style.display = useSelector ? '' : 'none';
-  let rate = 0;
-  if (data.normalClears > 0) {
-    rate = (data.extraAppearances / data.normalClears * 100).toFixed(2);
-  }
-  document.getElementById("rate").textContent = rate;
-  let conf = STAGE_CONFIG[stageIndex];
-  document.getElementById("stageTitle").innerHTML = `<span class="status-dot" style="background: ${conf.color}"></span>${conf.name}`;
-  for (let i = 0; i < STAGE_COUNT; i++) {
-    let btn = document.getElementById(`stageBtn${i}`);
-    if (btn) btn.classList.toggle("active", i === stageIndex);
-  }
-}
-
-function openEdit() {
-  const panel = document.getElementById("statsPanel");
-  if (panel.classList.contains("is-editing")) {
-    cancelEdit();
-    return;
-  }
-  let data = getData();
-  const isKinki = KINKI_STAGES.includes(stageIndex);
-  panel.classList.add("is-editing");
-  document.getElementById("mainContent").classList.add("is-editing");
-
-  document.getElementById('editNormal').value = data.normalClears;
-  document.getElementById('editExtra').value = data.extraAppearances;
-  document.getElementById('editReward').value = data.extraRewards;
-  document.getElementById('editCurrent').value = data.currentStreak;
-  document.getElementById('editMax').value = data.maxStreak;
-  document.getElementById('editMin').value = data.minStreak !== null ? data.minStreak : '';
-  document.getElementById('editDefeat').value = data.exDefeats;
-
-  const useSelector = EX_SELECTOR_STAGES.includes(stageIndex);
-  if (useSelector) {
-    document.getElementById('editDrop1').value = data.drop1;
-    document.getElementById('editDrop2').value = data.drop2;
-    document.getElementById('editDrop3').value = data.drop3;
-    document.getElementById('editDrop4').value = data.drop4;
-    document.getElementById('editDrop5').value = data.drop5;
-  }
-
-  if (isKinki) {
-    document.getElementById('editShihou').value = data.shihou;
-    document.getElementById('editLakiriza').value = data.lakiriza;
-  }
-}
-
-function cancelEdit() {
-  document.getElementById("statsPanel").classList.remove("is-editing");
-  document.getElementById("mainContent").classList.remove("is-editing");
-}
-
-function validate(d) {
-  if (d.extraAppearances > d.normalClears)
-    return "EX出現数が総周回数を超えています。";
-  if (d.currentStreak > d.normalClears)
-    return "現在周回数が総周回数を超えています。";
-  if (d.maxStreak > d.normalClears)
-    return "最高ハマり数が総周回数を超えています。";
-  if (d.minStreak !== null && d.minStreak < 1)
-    return "最低ハマり数は1以上です。";
-  if (d.minStreak !== null && d.minStreak > d.maxStreak)
-    return "最低ハマり数が最高ハマり数を超えています。";
-  if (d.extraRewards < 0)
-    return "ラック数は0以上の数字です。";
-  if (d.exDefeats > d.extraAppearances)
-    return "EX敗北数がEX出現数を超えています。";
-  if (d.shihou > d.extraRewards || d.lakiriza > d.extraRewards)
-    return "至宝/ラキリザ数はラック数を超えません。";
-  return null;
-}
-
-function saveEdit() {
-  const isKinki = KINKI_STAGES.includes(stageIndex);
-  const useSelector = EX_SELECTOR_STAGES.includes(stageIndex);
-  let newData = {
-    normalClears: parseInt(document.getElementById('editNormal').value, 10) || 0,
-    extraAppearances: parseInt(document.getElementById('editExtra').value, 10) || 0,
-    extraRewards: parseInt(document.getElementById('editReward').value, 10) || 0,
-    currentStreak: parseInt(document.getElementById('editCurrent').value, 10) || 0,
-    maxStreak: parseInt(document.getElementById('editMax').value, 10) || 0,
-    minStreak: (() => { const v = document.getElementById('editMin').value.trim(); const n = parseInt(v, 10); return v === '' ? null : (Number.isFinite(n) && n >= 1 ? n : null); })(),
-    exDefeats: parseInt(document.getElementById('editDefeat').value, 10) || 0,
-    shihou: isKinki ? (parseInt(document.getElementById('editShihou').value, 10) || 0) : (getData().shihou || 0),
-    lakiriza: isKinki ? (parseInt(document.getElementById('editLakiriza').value, 10) || 0) : (getData().lakiriza || 0),
-    drop1: useSelector ? (parseInt(document.getElementById('editDrop1').value, 10) || 0) : (getData().drop1 || 0),
-    drop2: useSelector ? (parseInt(document.getElementById('editDrop2').value, 10) || 0) : (getData().drop2 || 0),
-    drop3: useSelector ? (parseInt(document.getElementById('editDrop3').value, 10) || 0) : (getData().drop3 || 0),
-    drop4: useSelector ? (parseInt(document.getElementById('editDrop4').value, 10) || 0) : (getData().drop4 || 0),
-    drop5: useSelector ? (parseInt(document.getElementById('editDrop5').value, 10) || 0) : (getData().drop5 || 0)
-  }
-  let error = validate(newData);
-  if (error) {
-    alert(error);
-    return;
-  }
-  setData(newData);
-  cancelEdit();
-  update();
-}
-
-function toggleSidebar() {
-  const sidebar = document.getElementById("sidebar");
-  const btn = document.getElementById("toggleSidebarBtn");
-  const overlay = document.getElementById("sidebarOverlay");
-  sidebar.classList.toggle("open");
-  btn.classList.toggle("active");
-  overlay.classList.toggle("show");
-  const isOpen = sidebar.classList.contains("open");
-  document.body.style.overflow = isOpen ? "hidden" : "";
-  if (isOpen) {
-    cancelEdit();
-  }
-}
-
-function selectStage(idx) {
-  stageIndex = idx;
-  saveAll();
-  toggleSidebar();
-  update();
-}
-
-function toggleGroup(titleElem) {
-  const content = titleElem.nextElementSibling;
-  content.classList.toggle('collapsed');
-}
-
-function toggleDarkMode() {
-  const isDark = document.documentElement.classList.toggle('dark');
-  localStorage.setItem('darkMode', isDark);
-  document.getElementById('switch').checked = isDark;
-}
-
-function toggleButtonPos() {
-  const mainContent = document.getElementById('mainContent');
-  const slotButtons = document.getElementById('slotButtons');
-  const slotStats = document.getElementById('slotStats');
-
-  // ── FLIP: First ── record current positions
-  const btnFirst = slotButtons.getBoundingClientRect();
-  const statsFirst = slotStats.getBoundingClientRect();
-
-  // Toggle class (changes flex order)
-  const isBottom = mainContent.classList.toggle('buttons-bottom');
-  localStorage.setItem('buttonsBottom', isBottom);
-  document.getElementById('switchButtonPos').checked = isBottom;
-
-  // ── FLIP: Last ── force layout, record new positions
-  const btnLast = slotButtons.getBoundingClientRect();
-  const statsLast = slotStats.getBoundingClientRect();
-
-  // ── FLIP: Invert ── snap elements back to old positions instantly
-  const btnDelta = btnFirst.top - btnLast.top;
-  const statsDelta = statsFirst.top - statsLast.top;
-
-  slotButtons.style.transition = 'none';
-  slotStats.style.transition = 'none';
-  slotButtons.style.transform = `translateY(${btnDelta}px)`;
-  slotStats.style.transform = `translateY(${statsDelta}px)`;
-
-  // Force reflow so the browser registers the "from" state
-  slotButtons.getBoundingClientRect();
-
-  // ── FLIP: Play ── animate to natural (no transform) positions
-  const easing = 'cubic-bezier(0.34, 1.28, 0.64, 1)';
-  const dur = '0.42s';
-  slotButtons.style.transition = `transform ${dur} ${easing}`;
-  slotStats.style.transition = `transform ${dur} ${easing}`;
-  slotButtons.style.transform = '';
-  slotStats.style.transform = '';
-
-  // Clean up after animation completes
-  const cleanup = () => {
-    slotButtons.style.transition = '';
-    slotStats.style.transition = '';
-    slotButtons.style.transform = '';
-    slotStats.style.transform = '';
-  };
-  slotButtons.addEventListener('transitionend', cleanup, { once: true });
-}
-
-window.addEventListener("DOMContentLoaded", () => {
-  // Sync dark mode toggle
-  const isDark = document.documentElement.classList.contains('dark');
-  document.getElementById('switch').checked = isDark;
-
-  // Sync button position toggle
-  const isBottom = localStorage.getItem('buttonsBottom') === 'true';
-  if (isBottom) document.getElementById('mainContent').classList.add('buttons-bottom');
-  document.getElementById('switchButtonPos').checked = isBottom;
-
-  for (let i = 0; i < STAGE_COUNT; i++) {
-    let btn = document.getElementById(`stageBtn${i}`);
-    if (btn) {
-      let conf = STAGE_CONFIG[i];
-      btn.innerHTML = `${conf.name}`;
-      btn.style.setProperty('--stage-bg', conf.bg);
+    .flash {
+      animation: flash .25s ease
     }
-  }
 
-  for (let i = 0; i < allData.length; i++) {
-    if (allData[i].currentStreak > allData[i].maxStreak) {
-      allData[i].maxStreak = allData[i].currentStreak;
+    .flashRed {
+      animation: flashRed .25s ease
     }
-  }
-  saveAll();
-  update();
-});
+
+    /* ── Dark Mode Overrides ── */
+    html.dark {
+      --bg: #1c1c1e;
+      --card: #2c2c2e;
+      --separator: rgba(255, 255, 255, .12);
+      --label-primary: rgba(255, 255, 255, .85);
+      --label-secondary: rgba(235, 235, 245, .6);
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, .24), 0 1px 2px rgba(0, 0, 0, .16);
+      --sys-red: #ff453a;
+      --sys-purple: #bf5af2;
+      --sys-green: #30d158;
+      --sys-yellow: #ffd60a;
+      --sys-blue: #0a84ff;
+      --sys-gray: #98989d;
+      --bg-red: rgba(255, 69, 58, 0.15);
+      --bg-purple: rgba(191, 90, 242, 0.15);
+      --bg-green: rgba(48, 209, 88, 0.15);
+      --bg-yellow: rgba(255, 214, 10, 0.15);
+      --bg-blue: rgba(10, 132, 255, 0.15);
+      --bg-gray: rgba(152, 152, 157, 0.15);
+    }
+
+    html.dark #sidebar {
+      background: rgba(44, 44, 46, .88);
+    }
+
+    html.dark #sidebarOverlay {
+      background: rgba(0, 0, 0, .45);
+    }
+
+    html.dark #sidebar .stageBtn:hover {
+      background: rgba(255, 255, 255, .06);
+    }
+
+    html.dark #sidebar .stageBtn:active {
+      background: rgba(255, 255, 255, .1);
+    }
+
+    html.dark .edit-input {
+      border-color: rgba(255, 255, 255, .15);
+    }
+    
+    html.dark .editActions .subButton:last-child {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* ── Danger (destructive action) ── */
+    .danger {
+      color: var(--red) !important;
+    }
+
+
+    /* ── Button Position Toggle Row ── */
+    .toggleRow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 20px;
+      border-top: 1px solid var(--separator);
+    }
+
+    .toggleRowLabel {
+      font-size: 15px;
+      color: var(--label-primary);
+    }
+
+    /* Apple-style rounded toggle */
+    .appleToggle {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .appleToggle input {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .appleToggleTrack {
+      display: block;
+      width: 51px;
+      height: 31px;
+      border-radius: 15.5px;
+      background: #e5e5ea;
+      position: relative;
+      transition: background 0.25s ease;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.06);
+    }
+
+    html.dark .appleToggleTrack {
+      background: #3a3a3c;
+    }
+
+    .appleToggle input:checked + .appleToggleTrack {
+      background-color: #34c759;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256' viewBox='0 0 256 256'%3E%3Cpath d='M 45.96875 10.5 C 30.986175 10.5 18.248089 19.702473 13.03125 32.78125 L 35.71875 100.6875 L 74.375 108.90625 L 126.875 74.46875 L 122.6875 33.78125 L 93.125 10.5 L 45.96875 10.5 z M 102.40625 10.5 L 124.78125 29.09375 L 142.59375 10.5 L 102.40625 10.5 z M 148.3125 10.5 L 126.59375 33.125 L 131.375 75.3125 L 169.8125 93.65625 L 193.5 72.375 L 226.3125 14.4375 C 221.44201 11.926065 215.91027 10.5 210.03125 10.5 L 148.3125 10.5 z M 230.5625 17.03125 L 200.4375 71 L 245.5 83.78125 L 245.5 46 C 245.5 34.007022 239.61367 23.452627 230.5625 17.03125 z M 10.71875 42.09375 C 10.578669 43.380954 10.5 44.674375 10.5 46 L 10.5 108.5 L 30.6875 100.90625 L 10.71875 42.09375 z M 197.15625 75.28125 L 172.15625 97.25 L 174.28125 157.96875 L 208.5625 174.5625 L 245.5 165.34375 L 245.5 89.09375 L 197.15625 75.28125 z M 129.28125 78.84375 L 78.59375 112.25 L 89.28125 155.125 L 127.15625 186 L 169.28125 156.875 L 166.40625 96.875 L 129.28125 78.84375 z M 33.34375 104 L 10.5 112.375 L 10.5 168.3125 L 51.375 172 L 83.28125 154.75 L 74.03125 113.84375 L 33.34375 104 z M 86.34375 158.0625 L 52.4375 176.65625 L 24.34375 238.15625 C 30.322515 242.75627 37.806833 245.5 45.96875 245.5 L 92.25 245.5 L 126.0625 224.65625 L 124.75 191.03125 L 86.34375 158.0625 z M 170.96875 163.96875 L 129.8125 191.03125 L 131.03125 225.9375 L 144.8125 245.5 L 210.03125 245.5 C 214.56941 245.5 218.89434 244.63391 222.875 243.09375 L 206.59375 179.375 L 170.96875 163.96875 z M 245.5 169.6875 L 210.53125 178.9375 L 226.625 241.40625 C 237.87265 235.4648 245.5 223.65619 245.5 210 L 245.5 169.6875 z M 10.5 172.8125 L 10.5 210 C 10.5 219.14459 13.92536 227.46797 19.5625 233.75 L 47.25 176.875 L 10.5 172.8125 z M 127.15625 228.625 L 100.5625 245.5 L 138.84375 245.5 L 127.15625 228.625 z' fill='rgba(0,0,0,0.15)'/%3E%3C/svg%3E");
+      background-size: cover;
+      background-position: center;
+    }
+
+    html.dark .appleToggle input:checked + .appleToggleTrack {
+      background-color: #30d158;
+    }
+
+    .appleToggleThumb {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 27px;
+      height: 27px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.22), 0 1px 2px rgba(0,0,0,0.12);
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      will-change: transform;
+    }
+
+    .appleToggle input:checked + .appleToggleTrack .appleToggleThumb {
+      transform: translateX(20px);
+    }
+
+
+
+    /* ── Theme Transition ── */
+    html,
+    .panel,
+    #toggleSidebarBtn,
+    .editGrid input {
+      transition: background-color .3s, color .3s, border-color .3s, box-shadow .3s;
+    }
