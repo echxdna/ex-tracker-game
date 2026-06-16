@@ -226,6 +226,38 @@
       max-width: 420px;
       margin: 0 auto;
       padding: 72px 20px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Layout slots for swap */
+    #slotButtons { order: 1; }
+    #slotStats   { order: 2; }
+
+    .mainContent.buttons-bottom #slotButtons { order: 2; }
+    .mainContent.buttons-bottom #slotStats   { order: 1; }
+
+    /* Always pin these to the bottom regardless of swap state */
+    .edit-controls-wrapper { order: 10; }
+    .creditFooter          { order: 11; }
+
+    /* Slot animation readiness */
+    .layoutSlot {
+      will-change: transform;
+    }
+
+    /* Credit footer styles */
+    .creditFooter {
+      text-align: center;
+      padding-bottom: 16px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--label-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
     }
 
     /* ── Stage Title ── */
@@ -233,20 +265,17 @@
       font-size: 22px;
       font-family: 'Reggae One', sans-serif;
       text-align: center;
-      margin-bottom: 20px;
       letter-spacing: -.02em;
     }
 
     /* ── Button Group ── */
     .buttonGroup {
-      margin-bottom: 20px;
       text-align: center;
     }
 
     .mainButtons {
       display: flex;
       gap: 12px;
-      margin-bottom: 10px;
     }
 
     .mainButton {
@@ -403,6 +432,13 @@
       position: static;
       transform: none;
     }
+    
+    .edit-input-micro {
+      width: 24px !important;
+      padding: 2px !important;
+      font-size: 14px !important;
+      text-align: center;
+    }
 
     .edit-input:focus {
       border-color: var(--tint);
@@ -418,8 +454,8 @@
     .edit-controls-wrapper {
       display: grid;
       grid-template-columns: 1fr;
-      margin-top: 10px;
       align-items: start;
+      order: 10;
     }
 
     #btnOpenEdit {
@@ -430,7 +466,7 @@
       opacity: 1;
       transition: opacity 0.3s ease, transform 0.3s ease;
     }
-    .panel.is-editing ~ .edit-controls-wrapper #btnOpenEdit {
+    #mainContent.is-editing .edit-controls-wrapper #btnOpenEdit {
       opacity: 0;
       pointer-events: none;
       transform: translateY(-5px);
@@ -441,7 +477,7 @@
       grid-column: 1;
       width: 100%;
       display: flex;
-      gap: 10px;
+      gap: 12px;
       margin: 0;
       max-height: 0;
       opacity: 0;
@@ -449,7 +485,7 @@
       pointer-events: none;
       transition: max-height 0.3s ease, opacity 0.3s ease;
     }
-    .panel.is-editing ~ .edit-controls-wrapper .editActions {
+    #mainContent.is-editing .edit-controls-wrapper .editActions {
       max-height: 60px;
       opacity: 1;
       pointer-events: auto;
@@ -569,208 +605,78 @@
       color: var(--red) !important;
     }
 
-    /* ── Dark Mode Toggle ── */
-    .darkModeRow {
+
+    /* ── Button Position Toggle Row ── */
+    .toggleRow {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 14px 20px;
+      padding: 11px 20px;
       border-top: 1px solid var(--separator);
-      margin-top: auto;
     }
 
-    .darkModeLabel {
+    .toggleRowLabel {
       font-size: 15px;
       color: var(--label-primary);
     }
 
-    .switch-wrapper {
-      width: 52px;
-      height: 23px;
+    /* Apple-style rounded toggle */
+    .appleToggle {
       position: relative;
-    }
-
-    .switch {
-      --switch-width: 150px;
-      --switch-height: 65px;
-      --switch-round: 50px;
-      --switch-padding-x: 5px;
-      --switch-bg: linear-gradient(to bottom, #73bbff, #a2d1fd);
-      --switch-dark-bg: linear-gradient(to top, #2b3347, #181d27);
-      --border-width: 2px;
-      --border-gradient: linear-gradient(to bottom, #a2d1fd, #cde7ff);
-      --border-dark-gradient: linear-gradient(to bottom, #000000, #6c7384);
-      --sunmoon-size: 55px;
-      --switch-transition: all 0.5s ease;
-
-      transform: scale(0.35);
-      transform-origin: top left;
-      position: absolute;
-      top: 0;
-      left: 0;
-
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      justify-content: center;
-      width: var(--switch-width);
-      height: var(--switch-height);
-      border-radius: var(--switch-round);
       cursor: pointer;
-      transition: var(--switch-transition);
-      background: var(--switch-bg);
       -webkit-tap-highlight-color: transparent;
     }
 
-    .switch::before {
-      content: '';
+    .appleToggle input {
       position: absolute;
-      width: 100%;
-      height: 100%;
-      border-radius: var(--switch-round);
       opacity: 0;
-      background: var(--switch-dark-bg);
-      transition: var(--switch-transition);
+      width: 0;
+      height: 0;
     }
 
-    html.dark .switch::before {
-      opacity: 1;
+    .appleToggleTrack {
+      display: block;
+      width: 51px;
+      height: 31px;
+      border-radius: 15.5px;
+      background: #e5e5ea;
+      position: relative;
+      transition: background 0.25s ease;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.06);
     }
 
-    .switch .border {
-      position: absolute;
-      top: calc(var(--border-width) * -1);
-      left: calc(var(--border-width) * -1);
-      width: calc(100% + var(--border-width) * 2);
-      height: calc(100% + var(--border-width) * 2);
-      border-radius: var(--switch-round);
-      background: var(--border-gradient);
-      z-index: -1;
-      transition: var(--switch-transition);
+    html.dark .appleToggleTrack {
+      background: #3a3a3c;
     }
 
-    .switch .border::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      border-radius: var(--switch-round);
-      background: var(--border-dark-gradient);
-      opacity: 0;
-      transition: var(--switch-transition);
+    .appleToggle input:checked + .appleToggleTrack {
+      background: #34c759;
     }
 
-    html.dark .switch .border::after {
-      opacity: 1;
+    html.dark .appleToggle input:checked + .appleToggleTrack {
+      background: #30d158;
     }
 
-    .switch input {
-      display: none;
-    }
-
-    .sunmoon {
-      position: absolute;
-      width: var(--sunmoon-size);
-      height: var(--sunmoon-size);
-      border-radius: 50%;
-      transition: var(--switch-transition);
-      left: var(--switch-padding-x);
-      z-index: 1;
-      background-color: #FFC187;
-      box-shadow: 0px 0px 11.7px 0px #FFC187, 0px 0px 20px 0px #ffc18768, -2px -2px 5px 0px #ffab5c inset;
-    }
-
-    html.dark .sunmoon {
-      left: calc(100% - var(--sunmoon-size) - var(--switch-padding-x));
-      background-color: #dee5f3;
-      box-shadow: 0px 0px 51.7px 0px #dee5f3;
-    }
-
-    .darkside {
+    .appleToggleThumb {
       position: absolute;
       top: 2px;
       left: 2px;
-      width: 75%;
-      height: 75%;
+      width: 27px;
+      height: 27px;
       border-radius: 50%;
-      background-color: #FFC187;
-      transition: var(--switch-transition);
+      background: #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.22), 0 1px 2px rgba(0,0,0,0.12);
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      will-change: transform;
     }
 
-    html.dark .darkside {
-      background-color: #565c6b;
+    .appleToggle input:checked + .appleToggleTrack .appleToggleThumb {
+      transform: translateX(20px);
     }
 
-    .clouds {
-      border-radius: var(--switch-round);
-      position: relative;
-      height: 100%;
-      width: 100%;
-      overflow: hidden;
-      pointer-events: none;
-    }
 
-    .cloud {
-      position: absolute;
-      width: 60%;
-      transition: var(--switch-transition);
-    }
-
-    .cloud-1 {
-      bottom: -55%;
-      left: 0;
-    }
-
-    .cloud-2 {
-      bottom: -45%;
-      left: 25px;
-    }
-
-    .cloud-3 {
-      bottom: -40%;
-      right: 0px;
-    }
-
-    .cloud-4 {
-      bottom: -16%;
-      right: -25px;
-    }
-
-    html.dark .cloud-1 {
-      bottom: -35%;
-      left: -110px;
-    }
-
-    html.dark .cloud-2 {
-      bottom: -15%;
-      left: -110px;
-      transition: all 0.7s ease;
-    }
-
-    html.dark .cloud-3 {
-      bottom: -15%;
-      right: -110px;
-    }
-
-    html.dark .cloud-4 {
-      bottom: -5%;
-      right: -110px;
-      transition: all 0.7s ease;
-    }
-
-    .stars {
-      position: absolute;
-      top: 150%;
-      left: 0;
-      transform: translateY(-50%);
-      pointer-events: none;
-      transition: var(--switch-transition);
-    }
-
-    html.dark .stars {
-      top: 50%;
-    }
 
     /* ── Theme Transition ── */
     html,
