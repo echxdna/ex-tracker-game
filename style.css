@@ -162,21 +162,20 @@
       top: 16px;
       width: 36px;
       height: 36px;
-      background: rgba(255, 255, 255, .72);
-      backdrop-filter: saturate(180%) blur(20px);
-      -webkit-backdrop-filter: saturate(180%) blur(20px);
-      border: 1px solid var(--separator);
+      background: linear-gradient(135deg, #34c759, #30b350);
+      box-shadow: 0 2px 12px rgba(52, 199, 89, .35);
+      border: none;
       border-radius: 10px;
       z-index: 1100;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background .2s;
+      transition: transform .12s, box-shadow .12s;
     }
 
-    #toggleSidebarBtn:hover {
-      background: rgba(255, 255, 255, .92);
+    #toggleSidebarBtn:active {
+      transform: scale(.96);
     }
 
     .hamburger {
@@ -188,7 +187,7 @@
     .hamburger-line {
       width: 18px;
       height: 2px;
-      background: var(--tint);
+      background: #fff;
       border-radius: 2px;
       transition: all .3s cubic-bezier(.32, .72, 0, 1);
       transform-origin: center;
@@ -331,12 +330,19 @@
       overflow: hidden;
     }
 
-    .stats {
+    .stats, .stats tbody {
+      display: block;
       width: 100%;
-      border-collapse: collapse;
     }
 
-    .stats tr:not(:last-child) td {
+    .stats tr {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+
+    .stats tr:not(:last-child) {
       border-bottom: 1px solid var(--separator);
     }
 
@@ -348,6 +354,8 @@
       font-size: 15px;
       color: var(--label-secondary);
       text-align: left;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .stat {
@@ -356,6 +364,10 @@
       text-align: right;
       font-variant-numeric: tabular-nums;
       color: var(--label-primary);
+      flex-grow: 1;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
     }
 
     .percent::after {
@@ -392,6 +404,7 @@
       top: 50%;
       transform: translateY(-50%);
       width: 60px;
+      max-width: calc(100% - 18px);
       padding: 4px 6px;
       opacity: 0;
       pointer-events: none;
@@ -417,8 +430,10 @@
       right: 18px;
       top: 50%;
       transform: translateY(-50%);
+      max-width: calc(100% - 18px);
       display: flex;
       align-items: center;
+      justify-content: flex-end;
       gap: 4px;
       opacity: 0;
       pointer-events: none;
@@ -431,10 +446,11 @@
     .edit-input-group .edit-input {
       position: static;
       transform: none;
+      min-width: 0;
     }
     
     .edit-input-micro {
-      width: 24px !important;
+      width: 32px !important;
       padding: 2px !important;
       font-size: 14px !important;
       text-align: center;
@@ -464,6 +480,7 @@
       justify-self: center;
       margin: 0;
       opacity: 1;
+      color: var(--green);
       transition: opacity 0.3s ease, transform 0.3s ease;
     }
     #mainContent.is-editing .edit-controls-wrapper #btnOpenEdit {
@@ -572,14 +589,6 @@
       background: rgba(44, 44, 46, .88);
     }
 
-    html.dark #toggleSidebarBtn {
-      background: rgba(44, 44, 46, .72);
-    }
-
-    html.dark #toggleSidebarBtn:hover {
-      background: rgba(58, 58, 60, .92);
-    }
-
     html.dark #sidebarOverlay {
       background: rgba(0, 0, 0, .45);
     }
@@ -652,11 +661,14 @@
     }
 
     .appleToggle input:checked + .appleToggleTrack {
-      background: #34c759;
+      background-color: #34c759;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256' viewBox='0 0 256 256'%3E%3Cpath d='M 45.96875 10.5 C 30.986175 10.5 18.248089 19.702473 13.03125 32.78125 L 35.71875 100.6875 L 74.375 108.90625 L 126.875 74.46875 L 122.6875 33.78125 L 93.125 10.5 L 45.96875 10.5 z M 102.40625 10.5 L 124.78125 29.09375 L 142.59375 10.5 L 102.40625 10.5 z M 148.3125 10.5 L 126.59375 33.125 L 131.375 75.3125 L 169.8125 93.65625 L 193.5 72.375 L 226.3125 14.4375 C 221.44201 11.926065 215.91027 10.5 210.03125 10.5 L 148.3125 10.5 z M 230.5625 17.03125 L 200.4375 71 L 245.5 83.78125 L 245.5 46 C 245.5 34.007022 239.61367 23.452627 230.5625 17.03125 z M 10.71875 42.09375 C 10.578669 43.380954 10.5 44.674375 10.5 46 L 10.5 108.5 L 30.6875 100.90625 L 10.71875 42.09375 z M 197.15625 75.28125 L 172.15625 97.25 L 174.28125 157.96875 L 208.5625 174.5625 L 245.5 165.34375 L 245.5 89.09375 L 197.15625 75.28125 z M 129.28125 78.84375 L 78.59375 112.25 L 89.28125 155.125 L 127.15625 186 L 169.28125 156.875 L 166.40625 96.875 L 129.28125 78.84375 z M 33.34375 104 L 10.5 112.375 L 10.5 168.3125 L 51.375 172 L 83.28125 154.75 L 74.03125 113.84375 L 33.34375 104 z M 86.34375 158.0625 L 52.4375 176.65625 L 24.34375 238.15625 C 30.322515 242.75627 37.806833 245.5 45.96875 245.5 L 92.25 245.5 L 126.0625 224.65625 L 124.75 191.03125 L 86.34375 158.0625 z M 170.96875 163.96875 L 129.8125 191.03125 L 131.03125 225.9375 L 144.8125 245.5 L 210.03125 245.5 C 214.56941 245.5 218.89434 244.63391 222.875 243.09375 L 206.59375 179.375 L 170.96875 163.96875 z M 245.5 169.6875 L 210.53125 178.9375 L 226.625 241.40625 C 237.87265 235.4648 245.5 223.65619 245.5 210 L 245.5 169.6875 z M 10.5 172.8125 L 10.5 210 C 10.5 219.14459 13.92536 227.46797 19.5625 233.75 L 47.25 176.875 L 10.5 172.8125 z M 127.15625 228.625 L 100.5625 245.5 L 138.84375 245.5 L 127.15625 228.625 z' fill='rgba(0,0,0,0.15)'/%3E%3C/svg%3E");
+      background-size: cover;
+      background-position: center;
     }
 
     html.dark .appleToggle input:checked + .appleToggleTrack {
-      background: #30d158;
+      background-color: #30d158;
     }
 
     .appleToggleThumb {
