@@ -44,6 +44,12 @@
       --bg-gray: rgba(142, 142, 147, 0.08);
       --radius: 14px;
       --card-shadow: 0 1px 3px rgba(0, 0, 0, .08), 0 1px 2px rgba(0, 0, 0, .04);
+      /* -- Dark-mode-overridable component colors -- */
+      --sidebar-bg: rgba(255, 255, 255, .82);
+      --sidebar-overlay-bg: rgba(0, 0, 0, .18);
+      --stage-btn-hover: rgba(0, 0, 0, .04);
+      --stage-btn-active: rgba(0, 0, 0, .08);
+      --edit-actions-cancel-bg: rgba(0, 0, 0, 0.08);
     }
 
     html {
@@ -66,7 +72,7 @@
       top: 0;
       width: 280px;
       height: 100%;
-      background: rgba(255, 255, 255, .82);
+      background: var(--sidebar-bg);
       backdrop-filter: saturate(180%) blur(20px);
       -webkit-backdrop-filter: saturate(180%) blur(20px);
       z-index: 1000;
@@ -131,11 +137,11 @@
     }
 
     #sidebar .stageBtn:hover {
-      background: rgba(0, 0, 0, .04);
+      background: var(--stage-btn-hover);
     }
 
     #sidebar .stageBtn:active {
-      background: rgba(0, 0, 0, .08);
+      background: var(--stage-btn-active);
       transform: scale(0.98);
     }
 
@@ -211,7 +217,7 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, .18);
+      background: var(--sidebar-overlay-bg);
       z-index: 999;
       transition: opacity .35s;
     }
@@ -368,6 +374,7 @@
       display: flex;
       justify-content: flex-end;
       align-items: center;
+      position: relative;
     }
 
     .percent::after {
@@ -385,9 +392,6 @@
     }
 
     /* ── Edit Modes ── */
-    .stat {
-      position: relative;
-    }
 
     .stat-val {
       opacity: 1;
@@ -471,7 +475,6 @@
       display: grid;
       grid-template-columns: 1fr;
       align-items: start;
-      order: 10;
     }
 
     #btnOpenEdit {
@@ -522,7 +525,7 @@
     }
 
     .editActions .subButton:last-child {
-      background: rgba(0, 0, 0, 0.08);
+      background: var(--edit-actions-cancel-bg);
       color: var(--label-secondary);
     }
 
@@ -583,30 +586,16 @@
       --bg-yellow: rgba(255, 214, 10, 0.15);
       --bg-blue: rgba(10, 132, 255, 0.15);
       --bg-gray: rgba(152, 152, 157, 0.15);
-    }
-
-    html.dark #sidebar {
-      background: rgba(44, 44, 46, .88);
-    }
-
-    html.dark #sidebarOverlay {
-      background: rgba(0, 0, 0, .45);
-    }
-
-    html.dark #sidebar .stageBtn:hover {
-      background: rgba(255, 255, 255, .06);
-    }
-
-    html.dark #sidebar .stageBtn:active {
-      background: rgba(255, 255, 255, .1);
+      /* -- Dark component overrides -- */
+      --sidebar-bg: rgba(44, 44, 46, .88);
+      --sidebar-overlay-bg: rgba(0, 0, 0, .45);
+      --stage-btn-hover: rgba(255, 255, 255, .06);
+      --stage-btn-active: rgba(255, 255, 255, .1);
+      --edit-actions-cancel-bg: rgba(255, 255, 255, 0.1);
     }
 
     html.dark .edit-input {
       border-color: rgba(255, 255, 255, .15);
-    }
-    
-    html.dark .editActions .subButton:last-child {
-      background: rgba(255, 255, 255, 0.1);
     }
 
     /* ── Danger (destructive action) ── */
