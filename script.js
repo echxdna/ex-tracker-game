@@ -14,16 +14,22 @@ const STAGE_CONFIG = [
 ];
 let stageIndex = Number(localStorage.getItem("stageIndex")) || 0;
 
-const KINKI_STAGES = [4, 5, 6, 7, 8, 9];
-const EX_SELECTOR_STAGES = [0, 1, 2, 10];
+// O(1) lookups instead of Array.includes (O(n))
+const KINKI_STAGES = new Set([4, 5, 6, 7, 8, 9]);
+const EX_SELECTOR_STAGES = new Set([0, 1, 2, 10]);
+
 function makeDefault() {
   return { normalClears: 0, extraAppearances: 0, extraRewards: 0, currentStreak: 0, maxStreak: 0, minStreak: null, exDefeats: 0, shihou: 0, lakiriza: 0, drop1: 0, drop2: 0, drop3: 0, drop4: 0, drop5: 0 };
 }
-let allData = JSON.parse(localStorage.getItem("stageTrackerAll")) || Array.from({ length: STAGE_COUNT }, makeDefault);
 
+// Init allData — single path guarantees correct length
+let allData = JSON.parse(localStorage.getItem("stageTrackerAll")) || [];
 while (allData.length < STAGE_COUNT) allData.push(makeDefault());
 // migrate old data missing new fields
 allData.forEach(d => { if (d.exDefeats === undefined) d.exDefeats = 0; if (d.shihou === undefined) d.shihou = 0; if (d.lakiriza === undefined) d.lakiriza = 0; if (d.minStreak === undefined) d.minStreak = null; if (d.drop1 === undefined) { d.drop1 = 0; d.drop2 = 0; d.drop3 = 0; d.drop4 = 0; d.drop5 = 0; } });
+
+// ── Cached DOM references (populated in DOMContentLoaded) ──
+const DOM = {};
 
 function saveAll() {
   localStorage.setItem("stageTrackerAll", JSON.stringify(allData));
@@ -32,11 +38,6 @@ function saveAll() {
 
 function getData() {
   return allData[stageIndex];
-}
-
-function setData(d) {
-  allData[stageIndex] = d;
-  saveAll();
 }
 
 function flashScreen(color = "flash") {
@@ -50,32 +51,28 @@ function flashScreen(color = "flash") {
   });
 }
 
-function save() {
-  setData(getData());
-  update();
-}
-
 function normal() {
-  if (document.getElementById("statsPanel").classList.contains("is-editing")) {
+  if (DOM.statsPanel.classList.contains("is-editing")) {
     alert("先に編集を完了させてください。");
     return;
   }
-  let data = getData();
+  const data = getData();
   data.normalClears++;
   data.currentStreak++;
   if (data.currentStreak > data.maxStreak) {
     data.maxStreak = data.currentStreak;
   }
-  save();
+  saveAll();
+  update();
   flashScreen("flash");
 }
 
 function extra() {
-  if (document.getElementById("statsPanel").classList.contains("is-editing")) {
+  if (DOM.statsPanel.classList.contains("is-editing")) {
     alert("先に編集を完了させてください。");
     return;
   }
-  let data = getData();
+  const data = getData();
   if (data.extraAppearances >= data.normalClears) {
     alert("EX出現数は総周回数を超えません。");
     return;
@@ -84,8 +81,8 @@ function extra() {
     alert("先に現在周回数を追加してください。");
     return;
   }
-  const isKinki = KINKI_STAGES.includes(stageIndex);
-  const useSelector = EX_SELECTOR_STAGES.includes(stageIndex);
+  const isKinki = KINKI_STAGES.has(stageIndex);
+  const useSelector = EX_SELECTOR_STAGES.has(stageIndex);
   const dialogFn = useSelector ? showExSelectorDialog : showExDialog;
   dialogFn(isKinki, function (result) {
     if (!result) return;
@@ -102,9 +99,28 @@ function extra() {
     if (data.currentStreak > data.maxStreak) data.maxStreak = data.currentStreak;
     if (data.minStreak === null || data.currentStreak < data.minStreak) data.minStreak = data.currentStreak;
     data.currentStreak = 0;
-    save();
+    saveAll();
+    update();
     setTimeout(() => flashScreen("flashRed"), 50);
   });
+}
+
+// ── Shared dialog scroll-freeze helpers ──
+function freezeBodyScroll() {
+  const scrollY = window.scrollY;
+  document.body.style.position = 'fixed';
+  document.body.style.top = `-${scrollY}px`;
+  document.body.style.width = '100%';
+  document.body.style.overflow = 'hidden';
+  return scrollY;
+}
+
+function restoreBodyScroll(scrollY) {
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.width = '';
+  document.body.style.overflow = '';
+  window.scrollTo(0, scrollY);
 }
 
 /* ── EX Selector Dialog (stages 0,1,2,10) ── */
@@ -122,12 +138,12 @@ function showExSelectorDialog(showChecks, callback) {
   card.innerHTML = `
         <div style="font-size:17px;font-weight:600;text-align:center;margin-bottom:18px;">ドロップ数を入力</div>
         <div id="exSelectorRow" style="display:flex;gap:6px;">
-          <button class="ex-seg" data-val="defeat" style="flex:1;padding:12px 0;border-radius:10px;font-size:14px;font-weight:600;border:2px solid var(--separator);background:var(--bg);color:var(--label-secondary);cursor:pointer;font-family:inherit;transition:all .15s;">敗北</button>
           <button class="ex-seg" data-val="1" style="flex:1;padding:12px 0;border-radius:10px;font-size:17px;font-weight:600;border:2px solid var(--separator);background:var(--bg);color:var(--label-primary);cursor:pointer;font-family:inherit;transition:all .15s;">1</button>
           <button class="ex-seg" data-val="2" style="flex:1;padding:12px 0;border-radius:10px;font-size:17px;font-weight:600;border:2px solid var(--separator);background:var(--bg);color:var(--label-primary);cursor:pointer;font-family:inherit;transition:all .15s;">2</button>
           <button class="ex-seg" data-val="3" style="flex:1;padding:12px 0;border-radius:10px;font-size:17px;font-weight:600;border:2px solid var(--separator);background:var(--bg);color:var(--label-primary);cursor:pointer;font-family:inherit;transition:all .15s;">3</button>
           <button class="ex-seg" data-val="4" style="flex:1;padding:12px 0;border-radius:10px;font-size:17px;font-weight:600;border:2px solid var(--separator);background:var(--bg);color:var(--label-primary);cursor:pointer;font-family:inherit;transition:all .15s;">4</button>
           <button class="ex-seg" data-val="5" style="flex:1;padding:12px 0;border-radius:10px;font-size:17px;font-weight:600;border:2px solid var(--separator);background:var(--bg);color:var(--label-primary);cursor:pointer;font-family:inherit;transition:all .15s;">5</button>
+          <button class="ex-seg" data-val="defeat" style="flex:1;padding:12px 0;border-radius:10px;font-size:14px;font-weight:600;border:2px solid var(--separator);background:var(--bg);color:var(--label-secondary);cursor:pointer;font-family:inherit;transition:all .15s;">敗北</button>
         </div>
         <div id="exBossDropRow" style="display:flex;align-items:center;gap:8px;margin:14px 0 4px;opacity:0.4;pointer-events:none;transition:opacity .2s;">
           <input type="checkbox" id="exChkBossDrop" style="width:20px;height:20px;accent-color:var(--tint);cursor:pointer;flex-shrink:0;">
@@ -141,12 +157,7 @@ function showExSelectorDialog(showChecks, callback) {
   overlay.appendChild(card);
   document.body.appendChild(overlay);
 
-  // Freeze body scroll
-  const scrollY = window.scrollY;
-  document.body.style.position = 'fixed';
-  document.body.style.top = `-${scrollY}px`;
-  document.body.style.width = '100%';
-  document.body.style.overflow = 'hidden';
+  const scrollY = freezeBodyScroll();
   overlay.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
 
   let selectedVal = null; // 'defeat' | 1 | 2 | 3 | 4 | 5
@@ -186,11 +197,7 @@ function showExSelectorDialog(showChecks, callback) {
 
   function close(result) {
     overlay.remove();
-    document.body.style.position = '';
-    document.body.style.top = '';
-    document.body.style.width = '';
-    document.body.style.overflow = '';
-    window.scrollTo(0, scrollY);
+    restoreBodyScroll(scrollY);
     callback(result);
   }
 
@@ -234,8 +241,8 @@ function showExDialog(showChecks, callback) {
   card.innerHTML = `
         <div style="font-size:17px;font-weight:600;text-align:center;margin-bottom:16px;">ドロップ数を入力</div>
         <div style="display:flex;gap:8px;align-items:stretch;">
-          <button id="exKinkiDefeatBtn" style="padding:10px 14px;border-radius:10px;font-size:14px;font-weight:600;border:2px solid var(--separator);background:var(--bg);color:var(--label-secondary);cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap;">敗北</button>
           <input id="exRewardInput" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" style="flex:1;min-width:0;padding:10px 12px;font-size:18px;font-family:inherit;border:1px solid var(--separator);border-radius:10px;background:var(--bg);color:var(--label-primary);outline:none;text-align:center;transition:opacity .15s;">
+          <button id="exKinkiDefeatBtn" style="padding:10px 14px;border-radius:10px;font-size:14px;font-weight:600;border:2px solid var(--separator);background:var(--bg);color:var(--label-secondary);cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap;">敗北</button>
         </div>
         ${checksHTML}
         <div style="display:flex;gap:10px;margin-top:18px;">
@@ -246,13 +253,7 @@ function showExDialog(showChecks, callback) {
   overlay.appendChild(card);
   document.body.appendChild(overlay);
 
-  // Freeze body scroll (iOS-safe: position:fixed preserves layout, saves scroll offset)
-  const scrollY = window.scrollY;
-  document.body.style.position = 'fixed';
-  document.body.style.top = `-${scrollY}px`;
-  document.body.style.width = '100%';
-  document.body.style.overflow = 'hidden';
-  // Also block touchmove on the overlay itself (belt-and-suspenders for iOS)
+  const scrollY = freezeBodyScroll();
   overlay.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
 
   const inp = document.getElementById('exRewardInput');
@@ -318,12 +319,7 @@ function showExDialog(showChecks, callback) {
 
   function close(result) {
     overlay.remove();
-    // Restore body scroll state
-    document.body.style.position = '';
-    document.body.style.top = '';
-    document.body.style.width = '';
-    document.body.style.overflow = '';
-    window.scrollTo(0, scrollY);
+    restoreBodyScroll(scrollY);
     callback(result);
   }
 
@@ -344,70 +340,75 @@ function showExDialog(showChecks, callback) {
 }
 
 function update() {
-  let data = getData();
-  const isKinki = KINKI_STAGES.includes(stageIndex);
-  document.getElementById("normalTotal").textContent = data.normalClears;
-  document.getElementById("exAppearDefeats").textContent = `${data.extraAppearances} / ${data.exDefeats}`;
-  document.getElementById("rewardTotal").textContent = data.extraRewards;
-  document.getElementById("dropTotal").textContent = `${data.drop1} / ${data.drop2} / ${data.drop3} / ${data.drop4} / ${data.drop5}`;
-  document.getElementById("shihouLakirizaTotal").textContent = `${data.shihou} / ${data.lakiriza}`;
-  document.getElementById("current").textContent = data.currentStreak;
-  document.getElementById("minMaxStreak").textContent =
+  const data = getData();
+  const isKinki = KINKI_STAGES.has(stageIndex);
+  DOM.normalTotal.textContent = data.normalClears;
+  DOM.exAppearDefeats.textContent = `${data.extraAppearances} / ${data.exDefeats}`;
+  DOM.rewardTotal.textContent = data.extraRewards;
+  DOM.dropTotal.textContent = `${data.drop1} / ${data.drop2} / ${data.drop3} / ${data.drop4} / ${data.drop5}`;
+  DOM.shihouLakirizaTotal.textContent = `${data.shihou} / ${data.lakiriza}`;
+  DOM.current.textContent = data.currentStreak;
+  DOM.minMaxStreak.textContent =
     `${data.minStreak !== null ? data.minStreak : '—'} / ${data.maxStreak}`;
   // show/hide kinki-only row and drop row
-  document.getElementById("rowShihouLakiriza").style.display = isKinki ? '' : 'none';
-  const useSelector = EX_SELECTOR_STAGES.includes(stageIndex);
-  document.getElementById("rowDrops").style.display = useSelector ? '' : 'none';
+  DOM.rowShihouLakiriza.style.display = isKinki ? '' : 'none';
+  const useSelector = EX_SELECTOR_STAGES.has(stageIndex);
+  DOM.rowDrops.style.display = useSelector ? '' : 'none';
   let rate = 0;
   if (data.normalClears > 0) {
     rate = (data.extraAppearances / data.normalClears * 100).toFixed(2);
   }
-  document.getElementById("rate").textContent = rate;
-  let conf = STAGE_CONFIG[stageIndex];
-  document.getElementById("stageTitle").innerHTML = `<span class="status-dot" style="background: ${conf.color}"></span>${conf.name}`;
+  DOM.rate.textContent = rate;
+  const conf = STAGE_CONFIG[stageIndex];
+  DOM.stageTitle.innerHTML = `<span class="status-dot" style="background: ${conf.color}"></span>${conf.name}`;
   for (let i = 0; i < STAGE_COUNT; i++) {
-    let btn = document.getElementById(`stageBtn${i}`);
+    const btn = DOM.stageBtns[i];
     if (btn) btn.classList.toggle("active", i === stageIndex);
   }
 }
 
+// ── Helper: parse int from a cached DOM input ──
+function intVal(el, fallback) {
+  const n = parseInt(el.value, 10);
+  return Number.isFinite(n) ? n : (fallback !== undefined ? fallback : 0);
+}
+
 function openEdit() {
-  const panel = document.getElementById("statsPanel");
-  if (panel.classList.contains("is-editing")) {
+  if (DOM.statsPanel.classList.contains("is-editing")) {
     cancelEdit();
     return;
   }
-  let data = getData();
-  const isKinki = KINKI_STAGES.includes(stageIndex);
-  panel.classList.add("is-editing");
-  document.getElementById("mainContent").classList.add("is-editing");
+  const data = getData();
+  const isKinki = KINKI_STAGES.has(stageIndex);
+  DOM.statsPanel.classList.add("is-editing");
+  DOM.mainContent.classList.add("is-editing");
 
-  document.getElementById('editNormal').value = data.normalClears;
-  document.getElementById('editExtra').value = data.extraAppearances;
-  document.getElementById('editReward').value = data.extraRewards;
-  document.getElementById('editCurrent').value = data.currentStreak;
-  document.getElementById('editMax').value = data.maxStreak;
-  document.getElementById('editMin').value = data.minStreak !== null ? data.minStreak : '';
-  document.getElementById('editDefeat').value = data.exDefeats;
+  DOM.editNormal.value = data.normalClears;
+  DOM.editExtra.value = data.extraAppearances;
+  DOM.editReward.value = data.extraRewards;
+  DOM.editCurrent.value = data.currentStreak;
+  DOM.editMax.value = data.maxStreak;
+  DOM.editMin.value = data.minStreak !== null ? data.minStreak : '';
+  DOM.editDefeat.value = data.exDefeats;
 
-  const useSelector = EX_SELECTOR_STAGES.includes(stageIndex);
+  const useSelector = EX_SELECTOR_STAGES.has(stageIndex);
   if (useSelector) {
-    document.getElementById('editDrop1').value = data.drop1;
-    document.getElementById('editDrop2').value = data.drop2;
-    document.getElementById('editDrop3').value = data.drop3;
-    document.getElementById('editDrop4').value = data.drop4;
-    document.getElementById('editDrop5').value = data.drop5;
+    DOM.editDrop1.value = data.drop1;
+    DOM.editDrop2.value = data.drop2;
+    DOM.editDrop3.value = data.drop3;
+    DOM.editDrop4.value = data.drop4;
+    DOM.editDrop5.value = data.drop5;
   }
 
   if (isKinki) {
-    document.getElementById('editShihou').value = data.shihou;
-    document.getElementById('editLakiriza').value = data.lakiriza;
+    DOM.editShihou.value = data.shihou;
+    DOM.editLakiriza.value = data.lakiriza;
   }
 }
 
 function cancelEdit() {
-  document.getElementById("statsPanel").classList.remove("is-editing");
-  document.getElementById("mainContent").classList.remove("is-editing");
+  DOM.statsPanel.classList.remove("is-editing");
+  DOM.mainContent.classList.remove("is-editing");
 }
 
 function validate(d) {
@@ -431,42 +432,41 @@ function validate(d) {
 }
 
 function saveEdit() {
-  const isKinki = KINKI_STAGES.includes(stageIndex);
-  const useSelector = EX_SELECTOR_STAGES.includes(stageIndex);
-  let newData = {
-    normalClears: parseInt(document.getElementById('editNormal').value, 10) || 0,
-    extraAppearances: parseInt(document.getElementById('editExtra').value, 10) || 0,
-    extraRewards: parseInt(document.getElementById('editReward').value, 10) || 0,
-    currentStreak: parseInt(document.getElementById('editCurrent').value, 10) || 0,
-    maxStreak: parseInt(document.getElementById('editMax').value, 10) || 0,
-    minStreak: (() => { const v = document.getElementById('editMin').value.trim(); const n = parseInt(v, 10); return v === '' ? null : (Number.isFinite(n) && n >= 1 ? n : null); })(),
-    exDefeats: parseInt(document.getElementById('editDefeat').value, 10) || 0,
-    shihou: isKinki ? (parseInt(document.getElementById('editShihou').value, 10) || 0) : (getData().shihou || 0),
-    lakiriza: isKinki ? (parseInt(document.getElementById('editLakiriza').value, 10) || 0) : (getData().lakiriza || 0),
-    drop1: useSelector ? (parseInt(document.getElementById('editDrop1').value, 10) || 0) : (getData().drop1 || 0),
-    drop2: useSelector ? (parseInt(document.getElementById('editDrop2').value, 10) || 0) : (getData().drop2 || 0),
-    drop3: useSelector ? (parseInt(document.getElementById('editDrop3').value, 10) || 0) : (getData().drop3 || 0),
-    drop4: useSelector ? (parseInt(document.getElementById('editDrop4').value, 10) || 0) : (getData().drop4 || 0),
-    drop5: useSelector ? (parseInt(document.getElementById('editDrop5').value, 10) || 0) : (getData().drop5 || 0)
-  }
-  let error = validate(newData);
+  const isKinki = KINKI_STAGES.has(stageIndex);
+  const useSelector = EX_SELECTOR_STAGES.has(stageIndex);
+  const cur = getData();
+  const newData = {
+    normalClears: intVal(DOM.editNormal),
+    extraAppearances: intVal(DOM.editExtra),
+    extraRewards: intVal(DOM.editReward),
+    currentStreak: intVal(DOM.editCurrent),
+    maxStreak: intVal(DOM.editMax),
+    minStreak: (() => { const v = DOM.editMin.value.trim(); const n = parseInt(v, 10); return v === '' ? null : (Number.isFinite(n) && n >= 1 ? n : null); })(),
+    exDefeats: intVal(DOM.editDefeat),
+    shihou: isKinki ? intVal(DOM.editShihou) : (cur.shihou || 0),
+    lakiriza: isKinki ? intVal(DOM.editLakiriza) : (cur.lakiriza || 0),
+    drop1: useSelector ? intVal(DOM.editDrop1) : (cur.drop1 || 0),
+    drop2: useSelector ? intVal(DOM.editDrop2) : (cur.drop2 || 0),
+    drop3: useSelector ? intVal(DOM.editDrop3) : (cur.drop3 || 0),
+    drop4: useSelector ? intVal(DOM.editDrop4) : (cur.drop4 || 0),
+    drop5: useSelector ? intVal(DOM.editDrop5) : (cur.drop5 || 0)
+  };
+  const error = validate(newData);
   if (error) {
     alert(error);
     return;
   }
-  setData(newData);
+  allData[stageIndex] = newData;
+  saveAll();
   cancelEdit();
   update();
 }
 
 function toggleSidebar() {
-  const sidebar = document.getElementById("sidebar");
-  const btn = document.getElementById("toggleSidebarBtn");
-  const overlay = document.getElementById("sidebarOverlay");
-  sidebar.classList.toggle("open");
-  btn.classList.toggle("active");
-  overlay.classList.toggle("show");
-  const isOpen = sidebar.classList.contains("open");
+  DOM.sidebar.classList.toggle("open");
+  DOM.toggleSidebarBtn.classList.toggle("active");
+  DOM.sidebarOverlay.classList.toggle("show");
+  const isOpen = DOM.sidebar.classList.contains("open");
   document.body.style.overflow = isOpen ? "hidden" : "";
   if (isOpen) {
     cancelEdit();
@@ -488,22 +488,21 @@ function toggleGroup(titleElem) {
 function toggleDarkMode() {
   const isDark = document.documentElement.classList.toggle('dark');
   localStorage.setItem('darkMode', isDark);
-  document.getElementById('switch').checked = isDark;
+  DOM.switchDark.checked = isDark;
 }
 
 function toggleButtonPos() {
-  const mainContent = document.getElementById('mainContent');
-  const slotButtons = document.getElementById('slotButtons');
-  const slotStats = document.getElementById('slotStats');
+  const slotButtons = DOM.slotButtons;
+  const slotStats = DOM.slotStats;
 
   // ── FLIP: First ── record current positions
   const btnFirst = slotButtons.getBoundingClientRect();
   const statsFirst = slotStats.getBoundingClientRect();
 
   // Toggle class (changes flex order)
-  const isBottom = mainContent.classList.toggle('buttons-bottom');
+  const isBottom = DOM.mainContent.classList.toggle('buttons-bottom');
   localStorage.setItem('buttonsBottom', isBottom);
-  document.getElementById('switchButtonPos').checked = isBottom;
+  DOM.switchButtonPos.checked = isBottom;
 
   // ── FLIP: Last ── force layout, record new positions
   const btnLast = slotButtons.getBoundingClientRect();
@@ -540,19 +539,61 @@ function toggleButtonPos() {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
+  // ── Cache all DOM references ──
+  DOM.statsPanel = document.getElementById('statsPanel');
+  DOM.mainContent = document.getElementById('mainContent');
+  DOM.stageTitle = document.getElementById('stageTitle');
+  DOM.normalTotal = document.getElementById('normalTotal');
+  DOM.exAppearDefeats = document.getElementById('exAppearDefeats');
+  DOM.rewardTotal = document.getElementById('rewardTotal');
+  DOM.dropTotal = document.getElementById('dropTotal');
+  DOM.shihouLakirizaTotal = document.getElementById('shihouLakirizaTotal');
+  DOM.current = document.getElementById('current');
+  DOM.minMaxStreak = document.getElementById('minMaxStreak');
+  DOM.rate = document.getElementById('rate');
+  DOM.rowShihouLakiriza = document.getElementById('rowShihouLakiriza');
+  DOM.rowDrops = document.getElementById('rowDrops');
+  DOM.sidebar = document.getElementById('sidebar');
+  DOM.toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
+  DOM.sidebarOverlay = document.getElementById('sidebarOverlay');
+  DOM.switchDark = document.getElementById('switch');
+  DOM.switchButtonPos = document.getElementById('switchButtonPos');
+  DOM.slotButtons = document.getElementById('slotButtons');
+  DOM.slotStats = document.getElementById('slotStats');
+  // Edit inputs
+  DOM.editNormal = document.getElementById('editNormal');
+  DOM.editExtra = document.getElementById('editExtra');
+  DOM.editReward = document.getElementById('editReward');
+  DOM.editCurrent = document.getElementById('editCurrent');
+  DOM.editMax = document.getElementById('editMax');
+  DOM.editMin = document.getElementById('editMin');
+  DOM.editDefeat = document.getElementById('editDefeat');
+  DOM.editShihou = document.getElementById('editShihou');
+  DOM.editLakiriza = document.getElementById('editLakiriza');
+  DOM.editDrop1 = document.getElementById('editDrop1');
+  DOM.editDrop2 = document.getElementById('editDrop2');
+  DOM.editDrop3 = document.getElementById('editDrop3');
+  DOM.editDrop4 = document.getElementById('editDrop4');
+  DOM.editDrop5 = document.getElementById('editDrop5');
+  // Stage buttons (pre-cache array)
+  DOM.stageBtns = [];
+  for (let i = 0; i < STAGE_COUNT; i++) {
+    DOM.stageBtns[i] = document.getElementById(`stageBtn${i}`);
+  }
+
   // Sync dark mode toggle
   const isDark = document.documentElement.classList.contains('dark');
-  document.getElementById('switch').checked = isDark;
+  DOM.switchDark.checked = isDark;
 
   // Sync button position toggle
   const isBottom = localStorage.getItem('buttonsBottom') === 'true';
-  if (isBottom) document.getElementById('mainContent').classList.add('buttons-bottom');
-  document.getElementById('switchButtonPos').checked = isBottom;
+  if (isBottom) DOM.mainContent.classList.add('buttons-bottom');
+  DOM.switchButtonPos.checked = isBottom;
 
   for (let i = 0; i < STAGE_COUNT; i++) {
-    let btn = document.getElementById(`stageBtn${i}`);
+    const btn = DOM.stageBtns[i];
     if (btn) {
-      let conf = STAGE_CONFIG[i];
+      const conf = STAGE_CONFIG[i];
       btn.innerHTML = `${conf.name}`;
       btn.style.setProperty('--stage-bg', conf.bg);
     }
