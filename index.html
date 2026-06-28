@@ -25,6 +25,16 @@
 
 <body>
 
+  <!-- Shared SVG symbols -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+    <symbol id="icon-helmet" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m12 10 2 4v3a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-3a8 8 0 1 0-16 0v3a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-3l2-4h4Z" />
+      <path d="M4.82 7.9 8 10" />
+      <path d="M15.18 7.9 12 10" />
+      <path d="M16.93 10H20a2 2 0 0 1 0 4H2" />
+    </symbol>
+  </svg>
+
   <button id="toggleSidebarBtn" onclick="toggleSidebar()">
     <span class="hamburger">
       <span class="hamburger-line top"></span>
@@ -99,28 +109,12 @@
       <div class="panel" id="statsPanel">
         <table class="stats">
           <tr>
-            <td class="label"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                class="stat-icon">
-                <path
-                  d="m12 10 2 4v3a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-3a8 8 0 1 0-16 0v3a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-3l2-4h4Z" />
-                <path d="M4.82 7.9 8 10" />
-                <path d="M15.18 7.9 12 10" />
-                <path d="M16.93 10H20a2 2 0 0 1 0 4H2" />
-              </svg>現在周回</td>
+            <td class="label"><svg width="16" height="16" class="stat-icon"><use href="#icon-helmet"/></svg>現在周回</td>
             <td class="stat"><span id="current" class="stat-val"></span><input id="editCurrent" type="text"
                 inputmode="numeric" pattern="[0-9]*" class="edit-input"></td>
           </tr>
           <tr>
-            <td class="label"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                class="stat-icon">
-                <path
-                  d="m12 10 2 4v3a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-3a8 8 0 1 0-16 0v3a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-3l2-4h4Z" />
-                <path d="M4.82 7.9 8 10" />
-                <path d="M15.18 7.9 12 10" />
-                <path d="M16.93 10H20a2 2 0 0 1 0 4H2" />
-              </svg>総周回</td>
+            <td class="label"><svg width="16" height="16" class="stat-icon"><use href="#icon-helmet"/></svg>総周回</td>
             <td class="stat"><span id="normalTotal" class="stat-val"></span><input id="editNormal" type="text"
                 inputmode="numeric" pattern="[0-9]*" class="edit-input"></td>
           </tr>
@@ -193,15 +187,7 @@
             </td>
           </tr>
           <tr>
-            <td class="label"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                class="stat-icon">
-                <path
-                  d="m12 10 2 4v3a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-3a8 8 0 1 0-16 0v3a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-3l2-4h4Z" />
-                <path d="M4.82 7.9 8 10" />
-                <path d="M15.18 7.9 12 10" />
-                <path d="M16.93 10H20a2 2 0 0 1 0 4H2" />
-              </svg>最小／最大</td>
+            <td class="label"><svg width="16" height="16" class="stat-icon"><use href="#icon-helmet"/></svg>最小／最大</td>
             <td class="stat">
               <span id="minMaxStreak" class="stat-val"></span>
               <span class="edit-input-group">
